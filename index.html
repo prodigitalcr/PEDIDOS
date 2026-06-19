@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema de Restaurante Pro V2 - Firebase Roles</title>
+    <title>Restaurante Pro V3 - Reservas y Reportes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
@@ -57,106 +57,148 @@
     <!-- Toasts -->
     <div id="toast-container" class="fixed top-4 left-0 right-0 z-[110] flex flex-col items-center gap-2 px-4"></div>
 
-    <!-- Pantalla de Carga -->
+    <!-- Pantalla de Carga Inicial -->
     <div id="loading-screen" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center">
         <div class="loader mb-6 shadow-float"></div>
-        <h2 class="text-xl font-bold text-slate-800 mb-1">Iniciando Sistema</h2>
-        <p class="text-slate-500 font-medium animate-pulse">Conectando a Firebase...</p>
+        <h2 class="text-xl font-bold text-slate-800 mb-1">Cargando Menú</h2>
+    </div>
+    
+    <!-- Spinner de Bloqueo (Subiendo fotos, etc) -->
+    <div id="action-spinner" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[120] flex flex-col items-center justify-center">
+        <div class="loader mb-4"></div>
+        <p class="text-white font-bold" id="action-spinner-text">Procesando...</p>
     </div>
 
-    <!-- Pantalla de Login -->
-    <div id="login-view" class="hidden min-h-screen flex items-center justify-center p-4 bg-secondary relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-            <div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/20 blur-[120px]"></div>
-            <div class="absolute top-[60%] -right-[10%] w-[50%] h-[50%] rounded-full bg-blue-500/10 blur-[120px]"></div>
-        </div>
-
-        <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center relative z-10 fade-in border border-white/20">
-            <div class="w-16 h-16 bg-primary/10 rounded-2xl mx-auto flex items-center justify-center mb-4 text-primary">
-                <i class="ph-duotone ph-storefront text-4xl"></i>
+    <!-- BARRA SUPERIOR (NAV PRINCIPAL) -->
+    <nav class="glass-header text-white px-4 py-3 sticky top-0 z-50 shadow-md flex justify-between items-center">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="window.goHome()">
+            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg transform rotate-3">
+                <span class="text-xl">👨‍🍳</span>
             </div>
-            <h1 class="text-3xl font-extrabold text-slate-800 mb-2">Mi Restaurante</h1>
-            <p class="text-slate-500 mb-8 font-medium">Selecciona tu tipo de acceso</p>
-
-            <button onclick="window.loginAs('client')" class="group w-full bg-primary hover:bg-primaryDark text-white font-bold py-3.5 rounded-xl mb-6 transition-all duration-200 shadow-float flex justify-center items-center gap-2 active:scale-95">
-                <i class="ph ph-fork-knife text-xl group-hover:rotate-12 transition-transform"></i>
-                Soy Cliente (Hacer Pedido)
+            <h1 class="text-xl font-black tracking-tight hidden sm:block">El Buen Sabor</h1>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            <button onclick="window.openReservationModal()" class="bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors">
+                <i class="ph-bold ph-calendar-plus"></i> Reservar
             </button>
             
-            <div class="flex items-center my-6">
-                <div class="flex-grow border-t border-slate-200"></div>
-                <span class="px-3 text-xs font-bold text-slate-400 tracking-wider">PERSONAL</span>
-                <div class="flex-grow border-t border-slate-200"></div>
-            </div>
-
-            <div class="relative mb-4">
-                <i class="ph ph-lock-key absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 text-xl"></i>
-                <input type="password" id="pin-input" placeholder="PIN de Personal" class="w-full text-center text-2xl tracking-[0.2em] font-bold bg-slate-50 border border-slate-200 rounded-xl py-3.5 pl-10 pr-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all">
+            <div id="staff-auth-area">
+                <button onclick="window.openLogin()" class="bg-secondary hover:bg-slate-800 px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors shadow-sm">
+                    <i class="ph-bold ph-lock-key"></i> Personal
+                </button>
             </div>
             
-            <button onclick="window.checkPin()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3.5 rounded-xl transition-all duration-200 shadow active:scale-95 flex justify-center items-center gap-2">
-                <i class="ph ph-sign-in text-xl"></i> Entrar
-            </button>
-        </div>
-    </div>
-
-    <!-- Navegación Personal -->
-    <nav id="staff-nav" class="hidden bg-secondary text-white p-4 shadow-md sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="bg-white/10 p-2 rounded-lg">
-                    <i class="ph-duotone ph-user-circle text-2xl"></i>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span id="staff-name-display" class="font-bold text-lg leading-none">Nombre</span>
-                    </div>
-                    <span id="staff-role-badge" class="text-xs font-bold text-primary/90 uppercase tracking-wider">Rol</span>
-                </div>
+            <div id="staff-logged-area" class="hidden flex items-center gap-3">
+                <span id="nav-staff-name" class="font-bold text-sm hidden sm:inline"></span>
+                <button onclick="window.logoutStaff()" class="bg-red-500/80 hover:bg-red-600 px-3 py-2 rounded-xl font-bold text-sm flex items-center gap-2 transition-colors">
+                    Salir <i class="ph-bold ph-sign-out"></i>
+                </button>
             </div>
-            <button onclick="window.logout()" class="text-sm font-medium text-slate-300 hover:text-white flex items-center gap-2 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-colors">
-                Salir <i class="ph ph-sign-out text-lg"></i>
-            </button>
         </div>
     </nav>
 
-    <!-- VISTA CLIENTE -->
-    <div id="client-view" class="hidden max-w-md mx-auto bg-slate-50 min-h-screen relative shadow-2xl overflow-hidden pb-24">
-        
-        <header class="glass-header text-white px-6 py-8 rounded-b-[2.5rem] shadow-md relative overflow-hidden z-20">
-            <div class="absolute -right-10 -top-10 bg-white/20 w-40 h-40 rounded-full blur-3xl"></div>
-            <div class="absolute -left-10 bottom-0 bg-yellow-500/20 w-32 h-32 rounded-full blur-2xl"></div>
+    <!-- MODAL DE LOGIN PERSONAL -->
+    <div id="login-modal" class="hidden fixed inset-0 bg-secondary/80 backdrop-blur-sm z-[60] flex items-center justify-center fade-in px-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center relative shadow-2xl pop-in">
+            <button onclick="window.closeLogin()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200"><i class="ph ph-x"></i></button>
+            <div class="w-16 h-16 bg-primary/10 rounded-2xl mx-auto flex items-center justify-center mb-4 text-primary">
+                <i class="ph-duotone ph-identification-card text-4xl"></i>
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 mb-2">Acceso de Personal</h2>
+            <p class="text-slate-500 mb-6 text-sm">Ingresa tu PIN de Salonero o Admin</p>
+
+            <div class="relative mb-6">
+                <i class="ph ph-password absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 text-xl"></i>
+                <input type="password" id="pin-input" placeholder="****" class="w-full text-center text-3xl tracking-[0.3em] font-black bg-slate-50 border border-slate-200 rounded-xl py-4 pl-10 pr-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all">
+            </div>
             
-            <button onclick="window.logout()" class="absolute top-6 right-6 w-8 h-8 flex items-center justify-center bg-black/20 hover:bg-black/30 backdrop-blur-md rounded-full text-white transition-colors">
-                <i class="ph ph-x text-sm"></i>
+            <button onclick="window.checkPin()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-xl transition-all duration-200 shadow active:scale-95 flex justify-center items-center gap-2">
+                Entrar al Panel <i class="ph-bold ph-arrow-right"></i>
             </button>
+        </div>
+    </div>
+
+    <!-- MODAL DE RESERVAS -->
+    <div id="reservation-modal" class="hidden fixed inset-0 bg-secondary/80 backdrop-blur-sm z-[60] flex items-center justify-center fade-in px-4 overflow-y-auto py-10">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full relative shadow-2xl pop-in my-auto">
+            <button onclick="window.closeReservationModal()" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200"><i class="ph ph-x"></i></button>
             
-            <div class="relative z-10 flex items-center gap-4">
-                <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg transform rotate-3">
-                    <span class="text-3xl">👨‍🍳</span>
-                </div>
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary"><i class="ph-fill ph-calendar-check text-2xl"></i></div>
                 <div>
-                    <h1 class="text-2xl font-black mb-0.5 tracking-tight">El Buen Sabor</h1>
-                    <p class="text-sm font-medium text-white/80 flex items-center gap-1">¡Haz tu pedido en línea!</p>
+                    <h2 class="text-2xl font-black text-slate-800 leading-tight">Reservar Mesa</h2>
+                    <p class="text-sm font-medium text-slate-500">Asegura tu lugar con nosotros</p>
                 </div>
             </div>
-        </header>
 
-        <div class="flex px-4 mt-4 gap-2 relative z-10">
-            <button onclick="window.setClientTab('menu')" id="tab-menu" class="flex-1 py-3 px-4 font-bold rounded-2xl text-white bg-secondary shadow-md transition-all flex justify-center items-center gap-2">
-                <i class="ph ph-book-open"></i> Menú
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Tu Nombre</label>
+                    <input type="text" id="res-name" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:border-primary focus:outline-none mt-1" placeholder="Ej: Juan Pérez">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Fecha</label>
+                        <input type="date" id="res-date" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:border-primary focus:outline-none mt-1 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Hora</label>
+                        <input type="time" id="res-time" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:border-primary focus:outline-none mt-1 text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Cantidad de Personas</label>
+                    <input type="number" id="res-guests" min="1" max="20" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:border-primary focus:outline-none mt-1" placeholder="Ej: 4">
+                </div>
+            </div>
+
+            <div class="bg-orange-50 border border-orange-100 p-4 rounded-2xl mb-6">
+                <h4 class="font-bold text-orange-800 text-sm mb-1 flex items-center gap-1"><i class="ph-fill ph-bowl-food"></i> ¿Deseas pre-ordenar?</h4>
+                <p class="text-xs text-orange-600 mb-3">Puedes elegir la comida ahora para que esté lista al llegar.</p>
+                <button onclick="window.startReservationPreorder()" class="w-full bg-white border border-orange-200 text-primary font-bold py-2.5 rounded-xl text-sm hover:bg-orange-100 transition-colors">
+                    Seleccionar Menú
+                </button>
+            </div>
+
+            <button onclick="window.submitReservation()" class="w-full bg-primary hover:bg-primaryDark text-white font-bold py-4 rounded-xl shadow-float transition-all active:scale-95 flex justify-center items-center gap-2">
+                Confirmar Reserva <i class="ph-bold ph-check"></i>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- VISTA CLIENTE (VISTA PRINCIPAL / HOME) -->
+    <div id="client-view" class="max-w-md mx-auto bg-slate-50 min-h-screen relative shadow-2xl overflow-hidden pb-24 fade-in block">
+        
+        <!-- Banner Opcional -->
+        <div class="bg-gradient-to-r from-slate-800 to-secondary px-6 py-8 relative overflow-hidden rounded-b-[2.5rem] shadow-sm mb-4">
+             <div class="absolute -right-10 -top-10 bg-white/10 w-40 h-40 rounded-full blur-3xl"></div>
+             <h2 class="text-white text-2xl font-black mb-1">Menú Digital</h2>
+             <p class="text-white/70 text-sm font-medium">Explora nuestros deliciosos platillos</p>
+        </div>
+
+        <div class="flex px-4 gap-2 relative z-10">
+            <button onclick="window.setClientTab('menu')" id="tab-menu" class="flex-1 py-3 px-4 font-bold rounded-2xl text-white bg-primary shadow-md transition-all flex justify-center items-center gap-2">
+                <i class="ph-bold ph-book-open"></i> Menú
             </button>
             <button onclick="window.setClientTab('reviews')" id="tab-reviews" class="flex-1 py-3 px-4 font-bold rounded-2xl text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 transition-all flex justify-center items-center gap-2">
-                <i class="ph ph-star"></i> Reseñas
+                <i class="ph-bold ph-star"></i> Reseñas
             </button>
+        </div>
+
+        <!-- Alerta de Modo Pre-orden -->
+        <div id="preorder-alert" class="hidden mx-4 mt-4 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-xl flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-2 text-sm font-bold"><i class="ph-fill ph-info"></i> Modo Pre-orden Reserva</div>
+            <button onclick="window.cancelPreorder()" class="text-xs bg-blue-200 px-2 py-1 rounded font-bold hover:bg-blue-300">Cancelar</button>
         </div>
 
         <!-- Menú Cliente -->
         <div id="client-menu-section" class="slide-up">
-            <div class="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-md py-4 mt-2">
+            <div class="sticky top-16 z-30 bg-slate-50/95 backdrop-blur-md py-4 shadow-sm border-b border-slate-100">
                 <div class="flex overflow-x-auto gap-2 px-4 no-scrollbar" id="categories-container"></div>
             </div>
-            <div class="px-4 pb-6 space-y-4" id="menu-container"></div>
+            <div class="px-4 py-6 space-y-4" id="menu-container"></div>
         </div>
 
         <!-- Reseñas Cliente -->
@@ -173,18 +215,18 @@
                     Enviar Reseña <i class="ph ph-paper-plane-right"></i>
                 </button>
             </div>
-            <h3 class="font-bold text-slate-800 mb-4 px-1 flex items-center gap-2"><i class="ph-duotone ph-users"></i> Comentarios:</h3>
+            <h3 class="font-bold text-slate-800 mb-4 px-1 flex items-center gap-2"><i class="ph-duotone ph-users"></i> Lo que dicen los clientes:</h3>
             <div id="public-reviews-container" class="space-y-4"></div>
         </div>
 
         <!-- Carrito Cliente -->
         <div id="cart-bar" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm bg-secondary text-white rounded-2xl shadow-float p-3 flex justify-between items-center z-40 slide-up border border-slate-700">
             <div class="pl-3 flex flex-col justify-center">
-                <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Orden</span>
+                <span class="text-xs text-slate-400 font-medium uppercase tracking-wider" id="cart-bar-label">Total Orden</span>
                 <span class="font-black text-xl leading-none mt-0.5" id="cart-total-text">₡0</span>
             </div>
             <button onclick="window.openCart()" class="bg-primary hover:bg-primaryDark px-6 py-3 rounded-xl font-bold flex items-center gap-3 transition-colors active:scale-95">
-                Ver Orden <span id="cart-count" class="bg-white text-primary text-sm font-black w-7 h-7 flex items-center justify-center rounded-full shadow-inner pop-in">0</span>
+                Ver <span id="cart-count" class="bg-white text-primary text-sm font-black w-7 h-7 flex items-center justify-center rounded-full shadow-inner pop-in">0</span>
             </button>
         </div>
 
@@ -193,25 +235,37 @@
                 <button onclick="window.closeCart()" class="absolute top-6 right-6 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
                     <i class="ph ph-x"></i>
                 </button>
-                <div class="flex items-center gap-3 mb-6">
+                <div class="flex items-center gap-3 mb-4">
                     <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary"><i class="ph-fill ph-shopping-bag text-xl"></i></div>
-                    <h2 class="text-2xl font-black text-slate-800">Tu Pedido</h2>
+                    <h2 class="text-2xl font-black text-slate-800" id="cart-modal-title">Tu Pedido</h2>
                 </div>
-                <div class="mb-5 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Identificación de Orden</label>
-                    <div class="relative">
-                        <i class="ph ph-map-pin absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 text-lg"></i>
-                        <input type="text" id="order-table" placeholder="Ej: Mesa 4 o Tu Nombre" class="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 font-medium">
+                
+                <div id="cart-client-info" class="mb-5 bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Nombre del Cliente</label>
+                        <div class="relative">
+                            <i class="ph-bold ph-user absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="order-client-name" placeholder="Ej: María López" class="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 font-medium text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Número de Mesa</label>
+                        <div class="relative">
+                            <i class="ph-bold ph-map-pin absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" id="order-table" placeholder="Ej: Mesa 4" class="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 font-medium text-sm">
+                        </div>
                     </div>
                 </div>
+
                 <div id="cart-items" class="flex-1 overflow-y-auto space-y-3 mb-6 pr-1 no-scrollbar min-h-[150px]"></div>
+                
                 <div class="mt-auto">
                     <div class="border-t-2 border-dashed border-slate-200 pt-4 mb-5 flex justify-between items-end">
                         <span class="text-slate-500 font-bold uppercase tracking-wider text-sm">Total a pagar:</span>
                         <span id="modal-total" class="font-black text-3xl text-slate-800">₡0</span>
                     </div>
-                    <button onclick="window.sendOrder()" class="w-full bg-primary hover:bg-primaryDark text-white py-4 rounded-2xl font-black text-lg shadow-float transition-all active:scale-95 flex items-center justify-center gap-2">
-                        Confirmar y Enviar <i class="ph-bold ph-arrow-right"></i>
+                    <button id="btn-send-order" onclick="window.processCart()" class="w-full bg-primary hover:bg-primaryDark text-white py-4 rounded-2xl font-black text-lg shadow-float transition-all active:scale-95 flex items-center justify-center gap-2">
+                        Confirmar y Enviar <i class="ph-bold ph-paper-plane-right"></i>
                     </button>
                 </div>
             </div>
@@ -226,147 +280,120 @@
         </div>
         
         <div class="flex space-x-2 mb-8 overflow-x-auto no-scrollbar pb-2">
-            <button onclick="window.filterWaiterOrders('Pendiente')" id="btn-filter-Pendiente" class="px-5 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 bg-secondary text-white shadow-md">
-                <i class="ph-fill ph-bell-ringing"></i> Nuevas
+            <button onclick="window.filterWaiterOrders('Pendiente')" id="btn-filter-Pendiente" class="px-5 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 bg-secondary text-white shadow-md whitespace-nowrap">
+                <i class="ph-fill ph-bell-ringing"></i> Nuevos Pedidos
             </button>
-            <button onclick="window.filterWaiterOrders('Aceptada')" id="btn-filter-Aceptada" class="px-5 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">
+            <button onclick="window.filterWaiterOrders('Aceptada')" id="btn-filter-Aceptada" class="px-5 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 whitespace-nowrap">
                 <i class="ph-fill ph-cooking-pot"></i> Mis Mesas Activas
             </button>
-            <button onclick="window.filterWaiterOrders('Completada')" id="btn-filter-Completada" class="px-5 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">
+            <button onclick="window.filterWaiterOrders('Completada')" id="btn-filter-Completada" class="px-5 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 whitespace-nowrap">
                 <i class="ph-fill ph-check-circle"></i> Historial
+            </button>
+            <button onclick="window.filterWaiterOrders('Reservas')" id="btn-filter-Reservas" class="px-5 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 whitespace-nowrap">
+                <i class="ph-fill ph-calendar"></i> Ver Reservas
             </button>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="waiter-orders-container"></div>
-
-        <!-- Modal Nota Salonero -->
-        <div id="waiter-review-modal" class="hidden fixed inset-0 bg-secondary/80 backdrop-blur-sm z-50 flex items-center justify-center fade-in px-4">
-            <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl pop-in">
-                <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600"><i class="ph-fill ph-notebook text-xl"></i></div>
-                    <h3 class="font-black text-xl text-slate-800">Nota Interna</h3>
-                </div>
-                <p id="waiter-review-target" class="text-sm font-bold text-slate-500 mb-4 bg-slate-50 p-2 rounded-lg inline-block"></p>
-                <textarea id="waiter-review-text" rows="4" class="w-full rounded-2xl bg-slate-50 border border-slate-200 p-4 mb-6 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all resize-none" placeholder="Ej. Cliente solicitó salsa extra..."></textarea>
-                <div class="flex gap-3">
-                    <button onclick="window.closeWaiterReview()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl font-bold transition-colors">Cancelar</button>
-                    <button onclick="window.submitReview('waiter')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold shadow-md transition-colors flex items-center justify-center gap-2">Guardar <i class="ph ph-floppy-disk"></i></button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- VISTA ADMIN -->
     <div id="admin-view" class="hidden max-w-7xl mx-auto p-4 md:p-8 fade-in pb-20">
-        <div class="mb-8">
-            <h1 class="text-3xl font-black text-slate-800 mb-1">Dashboard Gerencial</h1>
-            <p class="text-slate-500 font-medium">Estadísticas, Menú y control en tiempo real.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- Ingresos -->
-            <div class="bg-white p-6 rounded-3xl shadow-soft border border-slate-100 relative overflow-hidden group">
-                <div class="absolute right-0 top-0 w-24 h-24 bg-green-500/10 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Ventas Brutas</p>
-                        <h2 class="text-3xl font-black text-slate-800" id="admin-revenue">₡0</h2>
-                    </div>
-                    <div class="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 shadow-sm"><i class="ph-fill ph-trend-up text-2xl"></i></div>
-                </div>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-black text-slate-800 mb-1">Dashboard Gerencial</h1>
+                <p class="text-slate-500 font-medium">Control total del restaurante y base de datos.</p>
             </div>
-            
-            <!-- Órdenes Activas -->
-            <div class="bg-white p-6 rounded-3xl shadow-soft border border-slate-100 relative overflow-hidden group">
-                <div class="absolute right-0 top-0 w-24 h-24 bg-blue-500/10 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
-                <div class="flex justify-between items-start mb-4">
-                    <div>
-                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Órdenes Activas</p>
-                        <h2 class="text-3xl font-black text-slate-800" id="admin-active-orders">0</h2>
-                    </div>
-                    <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm"><i class="ph-fill ph-cooking-pot text-2xl"></i></div>
-                </div>
-            </div>
-
-            <!-- Ganancia -->
-            <div class="bg-gradient-to-br from-secondary to-slate-800 p-6 rounded-3xl shadow-float relative overflow-hidden">
-                <div class="absolute right-0 top-0 w-32 h-32 bg-primary/20 rounded-bl-[100px] blur-xl"></div>
-                <div class="flex justify-between items-start mb-4 relative z-10">
-                    <div>
-                        <p class="text-xs text-slate-300 font-bold uppercase tracking-wider mb-1">Utilidad Estimada</p>
-                        <h2 class="text-4xl font-black text-white drop-shadow-md" id="admin-profit">₡0</h2>
-                    </div>
-                    <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center text-primary shadow-sm"><i class="ph-fill ph-money text-2xl text-white"></i></div>
-                </div>
+            <div class="flex gap-2 w-full md:w-auto">
+                <button onclick="window.downloadWaiterReport()" class="flex-1 md:flex-none bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-4 py-2.5 rounded-xl font-bold text-sm border border-indigo-200 flex items-center justify-center gap-2 transition-colors">
+                    <i class="ph-bold ph-download-simple"></i> Reporte Saloneros
+                </button>
+                <button onclick="window.downloadSalesMonthReport()" class="flex-1 md:flex-none bg-green-50 text-green-700 hover:bg-green-100 px-4 py-2.5 rounded-xl font-bold text-sm border border-green-200 flex items-center justify-center gap-2 transition-colors">
+                    <i class="ph-bold ph-download-simple"></i> Ventas del Mes
+                </button>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="bg-white p-6 md:p-8 rounded-3xl shadow-soft border border-slate-100">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- GESTOR DE MENÚ CON FOTOS REALES -->
+            <div class="bg-white p-6 md:p-8 rounded-3xl shadow-soft border border-slate-100 relative overflow-hidden">
                 <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                    <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600"><i class="ph-fill ph-users-three text-xl"></i></div>
-                    <h3 class="text-xl font-bold text-slate-800">Desempeño Saloneros</h3>
+                    <div class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"><i class="ph-bold ph-database text-xl"></i></div>
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-800">Base de Datos de Productos</h3>
+                        <p class="text-xs text-slate-500">Agrega o edita productos (Requiere 3 fotos multimedia).</p>
+                    </div>
                 </div>
-                <div id="admin-waiters-stats" class="space-y-4"></div>
+
+                <div class="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                    <input type="hidden" id="edit-menu-id">
+                    <h4 class="font-bold text-slate-700 mb-2" id="form-menu-title">Nuevo Producto</h4>
+                    
+                    <input id="new-menu-name" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-800 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Título / Nombre (Ej: Casado Especial)">
+                    
+                    <textarea id="new-menu-desc" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-800 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none" rows="2" placeholder="Descripción detallada del plato..."></textarea>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <input id="new-menu-price" type="number" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-800 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Precio ₡">
+                        <input id="new-menu-cat" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-slate-800 placeholder-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all" placeholder="Categoría (Ej: Platos Fuertes)">
+                    </div>
+
+                    <div class="space-y-2 pt-3 border-t border-slate-200">
+                        <label class="text-xs font-bold text-primary uppercase tracking-wider block">Subir Fotos (Min. 3 Obligatorias)</label>
+                        <p class="text-xs text-slate-500 mb-2">Selecciona exactamente 3 imágenes de tu dispositivo.</p>
+                        <input type="file" id="new-menu-photos" accept="image/*" multiple class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer">
+                        <div id="photo-preview-text" class="text-xs text-blue-600 font-medium hidden">Editando producto: Si no seleccionas archivos, se mantendrán las fotos actuales.</div>
+                    </div>
+
+                    <div class="flex gap-2 mt-4">
+                        <button onclick="window.cancelEdit()" id="btn-cancel-edit" class="hidden flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3.5 rounded-xl transition-colors">Cancelar</button>
+                        <button onclick="window.saveMenuItem()" id="btn-save-menu" class="flex-[2] bg-primary hover:bg-primaryDark text-white font-bold py-3.5 rounded-xl shadow transition-colors flex items-center justify-center gap-2">
+                            Guardar Producto <i class="ph-bold ph-floppy-disk"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <div class="bg-white p-6 md:p-8 rounded-3xl shadow-soft border border-slate-100">
-                <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                    <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-primary"><i class="ph-fill ph-receipt text-xl"></i></div>
-                    <h3 class="text-xl font-bold text-slate-800">Órdenes Globales</h3>
+            <!-- VISTA PREVIA DEL MENÚ -->
+            <div class="bg-secondary p-6 md:p-8 rounded-3xl shadow-float text-white relative overflow-hidden">
+                <div class="absolute right-0 top-0 w-64 h-64 bg-primary/20 rounded-bl-[200px] blur-3xl pointer-events-none"></div>
+                <div class="flex items-center justify-between mb-6 border-b border-slate-700 pb-4 relative z-10">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-white"><i class="ph-bold ph-eye text-xl"></i></div>
+                        <h3 class="text-xl font-bold text-white">Vista Previa / Gestión</h3>
+                    </div>
                 </div>
-                <div id="admin-all-orders" class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar"></div>
+                
+                <div id="admin-menu-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar relative z-10">
+                    <!-- Lista de menu admin aqui -->
+                </div>
             </div>
         </div>
         
-        <!-- Novedad: GESTIÓN DE MENÚ REGLA 3 FOTOS -->
-        <div class="bg-slate-800 p-6 md:p-8 rounded-3xl shadow-float mt-8 text-white relative overflow-hidden">
-            <div class="absolute right-0 top-0 w-64 h-64 bg-primary/20 rounded-bl-[200px] blur-3xl pointer-events-none"></div>
-            
-            <div class="flex items-center gap-3 mb-6 border-b border-slate-700 pb-4 relative z-10">
-                <div class="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary"><i class="ph-bold ph-pizza text-xl"></i></div>
-                <div>
-                    <h3 class="text-xl font-bold text-white">Gestor de Menú (Firebase)</h3>
-                    <p class="text-xs text-slate-400">Por seguridad, la base de datos exige: Nombre, Desc, Precio y <b>mínimo 3 fotos</b>.</p>
-                </div>
+        <!-- ESTADISTICAS BÁSICAS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-3xl shadow-soft border border-slate-100 flex items-center gap-4">
+                <div class="w-14 h-14 bg-green-100 rounded-2xl flex items-center justify-center text-green-600"><i class="ph-bold ph-money text-2xl"></i></div>
+                <div><p class="text-xs text-slate-400 font-bold uppercase">Ventas Hoy</p><h2 class="text-2xl font-black text-slate-800" id="admin-revenue-today">₡0</h2></div>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-                <!-- Formulario -->
-                <div class="space-y-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
-                    <h4 class="font-bold text-slate-300 mb-2">Agregar Nuevo Producto</h4>
-                    <input id="new-menu-name" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white placeholder-slate-500 focus:border-primary focus:outline-none" placeholder="Nombre (Ej: Casado)">
-                    <textarea id="new-menu-desc" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white placeholder-slate-500 focus:border-primary focus:outline-none resize-none" rows="2" placeholder="Descripción del plato..."></textarea>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <input id="new-menu-price" type="number" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white placeholder-slate-500 focus:border-primary focus:outline-none" placeholder="Precio ₡">
-                        <input id="new-menu-cat" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white placeholder-slate-500 focus:border-primary focus:outline-none" placeholder="Categoría">
-                    </div>
-
-                    <div class="space-y-2 pt-2 border-t border-slate-700">
-                        <label class="text-xs font-bold text-primary uppercase tracking-wider">Enlaces de Fotos (Min. 3 req.)</label>
-                        <input id="new-menu-p1" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-slate-300 focus:border-primary focus:outline-none" placeholder="URL Foto 1 (Ej: https://...)">
-                        <input id="new-menu-p2" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-slate-300 focus:border-primary focus:outline-none" placeholder="URL Foto 2">
-                        <input id="new-menu-p3" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-slate-300 focus:border-primary focus:outline-none" placeholder="URL Foto 3">
-                    </div>
-
-                    <button onclick="window.saveMenuItem()" class="w-full bg-primary hover:bg-primaryDark text-white font-bold py-3.5 rounded-xl shadow transition-colors mt-4">Guardar en Firestore</button>
-                </div>
-
-                <!-- Lista de Menú Activo -->
-                <div>
-                    <h4 class="font-bold text-slate-300 mb-4">Menú Actual en Base de Datos</h4>
-                    <div id="admin-menu-list" class="space-y-3 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar"></div>
-                </div>
+            <div class="bg-white p-6 rounded-3xl shadow-soft border border-slate-100 flex items-center gap-4">
+                <div class="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600"><i class="ph-bold ph-cooking-pot text-2xl"></i></div>
+                <div><p class="text-xs text-slate-400 font-bold uppercase">Órdenes Activas</p><h2 class="text-2xl font-black text-slate-800" id="admin-active-orders">0</h2></div>
+            </div>
+            <div class="bg-white p-6 rounded-3xl shadow-soft border border-slate-100 flex items-center gap-4">
+                <div class="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center text-primary"><i class="ph-bold ph-calendar text-2xl"></i></div>
+                <div><p class="text-xs text-slate-400 font-bold uppercase">Reservas Activas</p><h2 class="text-2xl font-black text-slate-800" id="admin-reservations-count">0</h2></div>
             </div>
         </div>
     </div>
+
 
     <!-- SCRIPTS -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
         window.showToast = (message, type = 'success') => {
             const container = document.getElementById('toast-container');
@@ -383,30 +410,34 @@
             { id: 'Todos', icon: 'ph-squares-four' },
             { id: 'Platos Fuertes', icon: 'ph-bowl-food' },
             { id: 'Desayunos', icon: 'ph-egg' },
-            { id: 'Bebidas', icon: 'ph-brandy' }
+            { id: 'Bebidas', icon: 'ph-brandy' },
+            { id: 'Postres', icon: 'ph-cake' }
         ];
 
-        // Mapeo local para el UI (En producción los roles vienen de users/UID)
+        // Mapeo local para el UI (PIN simulados)
         const STAFF = {
             '1111': { name: 'Carlos', role: 'waiter' },
             '2222': { name: 'Ana', role: 'waiter' },
             '9999': { name: 'Administrador', role: 'admin' }
         };
 
-        let db, auth, currentUser;
+        let db, auth, storage, currentUser;
         let unsubscribers = [];
         let localState = {
-            role: null,
+            role: 'client', // Por defecto todos inician viendo el menú como clientes
             staffName: null,
             category: 'Todos',
             menu: [],
             cart: [],
             orders: [],
             reviews: [],
+            reservations: [],
             waiterFilter: 'Pendiente',
-            targetOrderForReview: null
+            isReservingMenu: false, // Flag para saber si el carrito es para una reserva
+            tempReservationData: null
         };
 
+        // Credenciales proporcionadas por el usuario
         const firebaseConfig = {
             apiKey: "AIzaSyDhxJT_Gc3KRyG8InmzIH8PFK9Nl1cHJpM",
             authDomain: "menu-restaurantes-9b9d5.firebaseapp.com",
@@ -419,6 +450,7 @@
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
+                storage = getStorage(app);
 
                 await signInAnonymously(auth);
 
@@ -426,71 +458,72 @@
                     if (user) {
                         currentUser = user;
                         document.getElementById('loading-screen').classList.add('hidden');
-                        document.getElementById('login-view').classList.remove('hidden');
+                        startListeners('client'); // Inicia cargando datos públicos
                     }
                 });
             } catch (error) {
                 console.error("Error Firebase:", error);
-                window.showToast("Error conectando a BD. Revisa configuración.", "error");
+                document.getElementById('loading-screen').innerHTML = `<p class="text-red-600 font-bold p-4 text-center">Error conectando a BD. Revisa configuración o reglas de Firebase.</p>`;
             }
         }
 
-        // --- SISTEMA DE LISTENERS CONDICIONALES SEGÚN ROL ---
-        function startListeners(role) {
-            unsubscribers.forEach(unsub => unsub()); // Limpiar anteriores
-            unsubscribers = [];
+        function toggleSpinner(show, text="Procesando...") {
+            const s = document.getElementById('action-spinner');
+            document.getElementById('action-spinner-text').innerText = text;
+            show ? s.classList.remove('hidden') : s.classList.add('hidden');
+        }
 
+        // --- SISTEMA DE LISTENERS ---
+        function startListeners(role) {
+            unsubscribers.forEach(unsub => unsub());
+            unsubscribers = [];
             if (!currentUser) return;
 
-            // 1. Escuchar MENÚ (Todos tienen acceso)
+            // 1. Escuchar MENÚ (Público)
             const unsubMenu = onSnapshot(collection(db, 'menu'), (snap) => {
                 localState.menu = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                if (role === 'client') renderClientMenu();
-                if (role === 'admin') renderAdminMenu();
-            }, e => console.log("Menu listener error", e));
+                renderClientMenu();
+                if(localState.role === 'admin') renderAdminMenu();
+            }, e => console.log("Menu error", e));
             unsubscribers.push(unsubMenu);
 
-            // 2. Escuchar ÓRDENES (Separado por Regla)
-            let ordersQuery;
-            if (role === 'client') {
-                // Cliente SOLO ve sus propias órdenes
-                ordersQuery = query(collection(db, 'orders'), where('uid', '==', currentUser.uid));
-            } else {
-                // Admin y Salonero ven todas
-                ordersQuery = collection(db, 'orders');
-            }
-            
-            const unsubOrders = onSnapshot(ordersQuery, (snap) => {
-                localState.orders = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                localState.orders.sort((a, b) => b.timestamp - a.timestamp);
-                updateUIBasedOnRole();
-            }, e => console.log("Orders listener error", e));
-            unsubscribers.push(unsubOrders);
-
-            // 3. Escuchar RESEÑAS
-            let reviewsQuery;
-            if (role === 'client') {
-                reviewsQuery = query(collection(db, 'reviews'), where('type', '==', 'customer'));
-            } else {
-                reviewsQuery = collection(db, 'reviews');
-            }
-            
-            const unsubReviews = onSnapshot(reviewsQuery, (snap) => {
+            // 2. Escuchar RESEÑAS (Públicas)
+            const unsubReviews = onSnapshot(query(collection(db, 'reviews'), where('type', '==', 'customer')), (snap) => {
                 localState.reviews = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 localState.reviews.sort((a, b) => b.timestamp - a.timestamp);
-                updateUIBasedOnRole();
+                renderPublicReviews();
             }, e => console.log("Reviews error", e));
             unsubscribers.push(unsubReviews);
+
+            // Listeners exclusivos de Staff
+            if (role === 'waiter' || role === 'admin') {
+                const unsubOrders = onSnapshot(collection(db, 'orders'), (snap) => {
+                    localState.orders = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    localState.orders.sort((a, b) => b.timestamp - a.timestamp);
+                    if(role === 'waiter') renderWaiterOrders();
+                    if(role === 'admin') renderAdminDashboard();
+                });
+                unsubscribers.push(unsubOrders);
+
+                const unsubRes = onSnapshot(collection(db, 'reservations'), (snap) => {
+                    localState.reservations = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                    localState.reservations.sort((a, b) => new Date(a.date+'T'+a.time) - new Date(b.date+'T'+b.time));
+                    if(role === 'waiter') renderWaiterOrders();
+                    if(role === 'admin') renderAdminDashboard();
+                });
+                unsubscribers.push(unsubRes);
+            }
         }
 
-        window.loginAs = (role) => {
-            localState.role = role;
-            document.getElementById('login-view').classList.add('hidden');
-            if (role === 'client') {
-                document.getElementById('client-view').classList.remove('hidden');
-                startListeners('client');
-            }
-        };
+        // --- NAVEGACIÓN Y AUTH ---
+        window.openLogin = () => { document.getElementById('login-modal').classList.remove('hidden'); document.getElementById('pin-input').value=''; document.getElementById('pin-input').focus(); };
+        window.closeLogin = () => document.getElementById('login-modal').classList.add('hidden');
+        window.goHome = () => {
+            if(localState.role === 'client') return; // Ya esta ahi
+            document.getElementById('waiter-view').classList.add('hidden');
+            document.getElementById('admin-view').classList.add('hidden');
+            document.getElementById('client-view').classList.remove('hidden');
+        }
 
         window.checkPin = () => {
             const pin = document.getElementById('pin-input').value;
@@ -498,53 +531,53 @@
                 localState.role = STAFF[pin].role;
                 localState.staffName = STAFF[pin].name;
                 
-                document.getElementById('login-view').classList.add('hidden');
-                document.getElementById('staff-nav').classList.remove('hidden');
-                document.getElementById('staff-name-display').innerText = localState.staffName;
-                document.getElementById('staff-role-badge').innerText = localState.role === 'admin' ? 'Admin' : 'Salonero';
+                window.closeLogin();
+                document.getElementById('client-view').classList.add('hidden');
+                
+                // Actualizar UI Header
+                document.getElementById('staff-auth-area').classList.add('hidden');
+                document.getElementById('staff-logged-area').classList.remove('hidden');
+                document.getElementById('staff-logged-area').classList.add('flex');
+                document.getElementById('nav-staff-name').innerHTML = `<span class="text-orange-200">${localState.role==='admin'?'Admin':'Salonero'}:</span> ${localState.staffName}`;
 
                 if (localState.role === 'waiter') document.getElementById('waiter-view').classList.remove('hidden');
                 if (localState.role === 'admin') document.getElementById('admin-view').classList.remove('hidden');
                 
                 startListeners(localState.role);
-                window.showToast(`Hola ${localState.staffName}`, 'success');
+                window.showToast(`Bienvenido ${localState.staffName}`, 'success');
             } else {
                 window.showToast("PIN incorrecto", "error");
             }
-            document.getElementById('pin-input').value = '';
         };
 
-        window.logout = () => {
-            localState.role = null;
+        window.logoutStaff = () => {
+            localState.role = 'client';
             localState.staffName = null;
-            localState.cart = [];
-            unsubscribers.forEach(u => u());
-            unsubscribers = [];
+            document.getElementById('staff-auth-area').classList.remove('hidden');
+            document.getElementById('staff-logged-area').classList.add('hidden');
+            document.getElementById('staff-logged-area').classList.remove('flex');
             
-            document.querySelectorAll('#client-view, #waiter-view, #admin-view, #staff-nav').forEach(el => el.classList.add('hidden'));
-            document.getElementById('login-view').classList.remove('hidden');
-            updateCartUI();
+            document.getElementById('waiter-view').classList.add('hidden');
+            document.getElementById('admin-view').classList.add('hidden');
+            document.getElementById('client-view').classList.remove('hidden');
+            
+            startListeners('client');
+            window.showToast("Sesión cerrada", "info");
         };
 
-        function updateUIBasedOnRole() {
-            if (localState.role === 'client') renderPublicReviews();
-            if (localState.role === 'waiter') renderWaiterOrders();
-            if (localState.role === 'admin') renderAdminDashboard();
-        }
-
-        // --- CLIENTE LÓGICA ---
+        // --- CLIENTE & RESERVAS ---
         window.setClientTab = (tab) => {
             const menuBtn = document.getElementById('tab-menu');
             const reviewBtn = document.getElementById('tab-reviews');
             if(tab === 'menu') {
                 document.getElementById('client-menu-section').classList.remove('hidden');
                 document.getElementById('client-reviews-section').classList.add('hidden');
-                menuBtn.className = "flex-1 py-3 px-4 font-bold rounded-2xl text-white bg-secondary shadow-md transition-all flex justify-center items-center gap-2";
+                menuBtn.className = "flex-1 py-3 px-4 font-bold rounded-2xl text-white bg-primary shadow-md transition-all flex justify-center items-center gap-2";
                 reviewBtn.className = "flex-1 py-3 px-4 font-bold rounded-2xl text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 transition-all flex justify-center items-center gap-2";
             } else {
                 document.getElementById('client-menu-section').classList.add('hidden');
                 document.getElementById('client-reviews-section').classList.remove('hidden');
-                reviewBtn.className = "flex-1 py-3 px-4 font-bold rounded-2xl text-white bg-secondary shadow-md transition-all flex justify-center items-center gap-2";
+                reviewBtn.className = "flex-1 py-3 px-4 font-bold rounded-2xl text-white bg-primary shadow-md transition-all flex justify-center items-center gap-2";
                 menuBtn.className = "flex-1 py-3 px-4 font-bold rounded-2xl text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 transition-all flex justify-center items-center gap-2";
             }
         }
@@ -555,7 +588,7 @@
             const catContainer = document.getElementById('categories-container');
             catContainer.innerHTML = defaultCategories.map(cat => `
                 <button onclick="window.filterCategory('${cat.id}')" 
-                    class="whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 border ${localState.category === cat.id ? 'bg-primary text-white border-primary shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
+                    class="whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 border ${localState.category === cat.id ? 'bg-secondary text-white border-secondary shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
                     <i class="ph ${cat.icon} text-lg"></i> ${cat.id}
                 </button>
             `).join('');
@@ -564,18 +597,18 @@
             let filteredMenu = localState.category === "Todos" ? localState.menu : localState.menu.filter(i => i.category === localState.category);
             
             if(filteredMenu.length === 0) {
-                menuContainer.innerHTML = `<p class="text-center text-slate-400 py-10">El menú está vacío. El admin debe agregar productos.</p>`;
+                menuContainer.innerHTML = `<p class="text-center text-slate-400 py-10 font-medium">No hay productos en esta categoría.</p>`;
                 return;
             }
 
             menuContainer.innerHTML = filteredMenu.map(item => {
-                // Extraer la primera foto si existe según las reglas
                 const hasPhotos = item.photos && Array.isArray(item.photos) && item.photos.length > 0;
+                // Mostrar la primera foto del array de 3
                 const bgStyle = hasPhotos ? `background-image: url('${item.photos[0]}'); background-size: cover; background-position: center;` : '';
                 const fallbackIcon = !hasPhotos ? `<span class="relative z-10 drop-shadow-sm">🍽️</span>` : '';
 
                 return `
-                <div class="bg-white border border-slate-100 rounded-3xl p-4 shadow-soft flex gap-4 items-center group hover:border-primary/20 transition-all">
+                <div class="bg-white border border-slate-100 rounded-3xl p-4 shadow-soft flex gap-4 items-center group hover:border-primary/30 transition-all cursor-pointer">
                     <div class="w-24 h-24 flex-shrink-0 bg-slate-200 rounded-2xl flex items-center justify-center text-4xl shadow-inner relative overflow-hidden" style="${bgStyle}">
                         <div class="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent"></div>
                         ${fallbackIcon}
@@ -585,7 +618,7 @@
                         <p class="text-xs font-medium text-slate-500 mb-3 line-clamp-2">${item.description}</p>
                         <div class="flex justify-between items-end">
                             <span class="font-black text-primary text-lg tracking-tight">₡${item.price.toLocaleString('es-CR')}</span>
-                            <button onclick="window.addToCart('${item.id}')" class="bg-slate-100 text-slate-700 font-bold w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm active:scale-90">
+                            <button onclick="window.addToCart('${item.id}')" class="bg-slate-100 text-slate-700 font-bold w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm active:scale-90 z-10">
                                 <i class="ph-bold ph-plus text-lg"></i>
                             </button>
                         </div>
@@ -593,14 +626,77 @@
                 </div>
             `}).join('');
         }
+
+        // RESERVAS
+        window.openReservationModal = () => document.getElementById('reservation-modal').classList.remove('hidden');
+        window.closeReservationModal = () => document.getElementById('reservation-modal').classList.add('hidden');
         
+        window.startReservationPreorder = () => {
+            const name = document.getElementById('res-name').value.trim();
+            const date = document.getElementById('res-date').value;
+            const time = document.getElementById('res-time').value;
+            const guests = document.getElementById('res-guests').value;
+
+            if(!name || !date || !time || !guests) return window.showToast("Llena los datos de la reserva primero", "warning");
+
+            localState.tempReservationData = { name, date, time, guests };
+            localState.isReservingMenu = true;
+            localState.cart = []; // Limpiar carrito
+            
+            window.closeReservationModal();
+            document.getElementById('preorder-alert').classList.remove('hidden');
+            window.showToast("Selecciona los platillos para tu reserva", "info");
+            updateCartUI();
+        };
+
+        window.cancelPreorder = () => {
+            localState.isReservingMenu = false;
+            localState.tempReservationData = null;
+            localState.cart = [];
+            document.getElementById('preorder-alert').classList.add('hidden');
+            updateCartUI();
+            window.showToast("Pre-orden cancelada", "info");
+        }
+
+        window.submitReservation = async () => {
+            const name = document.getElementById('res-name').value.trim();
+            const date = document.getElementById('res-date').value;
+            const time = document.getElementById('res-time').value;
+            const guests = document.getElementById('res-guests').value;
+
+            if(!name || !date || !time || !guests) return window.showToast("Completa todos los campos", "warning");
+
+            try {
+                toggleSpinner(true, "Guardando reserva...");
+                await addDoc(collection(db, 'reservations'), {
+                    uid: currentUser.uid,
+                    clientName: name,
+                    date: date,
+                    time: time,
+                    guests: guests,
+                    preorderItems: [], // Vacio si no pre-ordeno por boton
+                    total: 0,
+                    status: 'Pendiente',
+                    timestamp: Date.now()
+                });
+                toggleSpinner(false);
+                window.closeReservationModal();
+                ['res-name', 'res-date', 'res-time', 'res-guests'].forEach(id => document.getElementById(id).value = '');
+                window.showToast("¡Reserva confirmada con éxito!", "success");
+            } catch (error) {
+                toggleSpinner(false);
+                console.error(error); window.showToast("Error al guardar reserva", "error");
+            }
+        };
+
+        // CARRITO
         window.addToCart = (id) => {
             const item = localState.menu.find(i => i.id === id);
             const existing = localState.cart.find(i => i.id === id);
             if(existing) existing.qty++; else localState.cart.push({...item, qty: 1});
             updateCartUI();
             const btn = document.getElementById('cart-count'); btn.classList.remove('pop-in'); void btn.offsetWidth; btn.classList.add('pop-in');
-            window.showToast("Agregado al pedido", 'info');
+            window.showToast("Agregado", 'info');
         };
 
         window.removeFromCart = (id) => { localState.cart = localState.cart.filter(i => i.id !== id); updateCartUI(); };
@@ -617,16 +713,29 @@
             document.getElementById('cart-total-text').innerText = `₡${totalPrice.toLocaleString('es-CR')}`;
             document.getElementById('modal-total').innerText = `₡${totalPrice.toLocaleString('es-CR')}`;
 
+            // Cambiar textos según el modo
+            if(localState.isReservingMenu) {
+                document.getElementById('cart-bar-label').innerText = "Total Pre-orden";
+                document.getElementById('cart-modal-title').innerText = "Pre-orden Reserva";
+                document.getElementById('cart-client-info').classList.add('hidden'); // No pedir mesa ni nombre aqui, ya lo dio
+                document.getElementById('btn-send-order').innerHTML = `Confirmar Reserva con Menú <i class="ph-bold ph-calendar-check"></i>`;
+            } else {
+                document.getElementById('cart-bar-label').innerText = "Total Orden";
+                document.getElementById('cart-modal-title').innerText = "Tu Pedido";
+                document.getElementById('cart-client-info').classList.remove('hidden');
+                document.getElementById('btn-send-order').innerHTML = `Confirmar y Enviar <i class="ph-bold ph-paper-plane-right"></i>`;
+            }
+
             document.getElementById('cart-items').innerHTML = localState.cart.map(item => `
-                <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-                    <div class="flex items-center gap-4">
-                        <div class="bg-slate-100 text-slate-700 font-black w-8 h-8 rounded-lg flex items-center justify-center text-sm shadow-inner">${item.qty}</div>
+                <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-slate-100 text-slate-700 font-black w-8 h-8 rounded-lg flex items-center justify-center text-sm">${item.qty}</div>
                         <div>
-                            <p class="font-bold text-sm text-slate-800">${item.name}</p>
-                            <p class="text-xs font-medium text-slate-500 mt-0.5">₡${(item.price * item.qty).toLocaleString('es-CR')}</p>
+                            <p class="font-bold text-sm text-slate-800 leading-tight">${item.name}</p>
+                            <p class="text-xs font-bold text-primary mt-0.5">₡${(item.price * item.qty).toLocaleString('es-CR')}</p>
                         </div>
                     </div>
-                    <button onclick="window.removeFromCart('${item.id}')" class="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 p-2.5 rounded-xl transition-colors"><i class="ph-bold ph-trash text-lg"></i></button>
+                    <button onclick="window.removeFromCart('${item.id}')" class="text-red-400 hover:text-red-600 p-2"><i class="ph-bold ph-trash text-lg"></i></button>
                 </div>
             `).join('');
         }
@@ -634,77 +743,97 @@
         window.openCart = () => document.getElementById('cart-modal').classList.remove('hidden');
         window.closeCart = () => document.getElementById('cart-modal').classList.add('hidden');
 
-        window.sendOrder = async () => {
+        window.processCart = async () => {
             if(localState.cart.length === 0) return;
-            const tableInput = document.getElementById('order-table').value.trim();
-            if (!tableInput) return window.showToast("Ingresa tu mesa/nombre", "warning");
-
             const total = localState.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+            const itemsToSave = localState.cart.map(i => ({id: i.id, name: i.name, qty: i.qty, price: i.price}));
 
-            // CUMPLE REGLAS: Incluye UID del creador y Status Pendiente
-            const newOrder = {
-                uid: currentUser.uid, 
-                table: tableInput,
-                items: localState.cart.map(i => ({id: i.id, name: i.name, qty: i.qty, price: i.price})),
-                total: total,
-                status: 'Pendiente',
-                waiter: null,
-                timestamp: Date.now(),
-                dateStr: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-            };
+            toggleSpinner(true, "Procesando...");
 
             try {
-                await addDoc(collection(db, 'orders'), newOrder);
-                localState.cart = [];
-                window.closeCart();
-                updateCartUI();
-                document.getElementById('order-table').value = '';
-                window.showToast("¡Pedido enviado a cocina!", "success");
+                if(localState.isReservingMenu) {
+                    // Guardar reserva con menu
+                    await addDoc(collection(db, 'reservations'), {
+                        uid: currentUser.uid,
+                        clientName: localState.tempReservationData.name,
+                        date: localState.tempReservationData.date,
+                        time: localState.tempReservationData.time,
+                        guests: localState.tempReservationData.guests,
+                        preorderItems: itemsToSave,
+                        total: total,
+                        status: 'Pendiente',
+                        timestamp: Date.now()
+                    });
+                    window.cancelPreorder(); // Limpia y oculta
+                    window.closeCart();
+                    window.showToast("Reserva y comida confirmadas", "success");
+                } else {
+                    // Pedido normal de restaurante
+                    const clientName = document.getElementById('order-client-name').value.trim();
+                    const table = document.getElementById('order-table').value.trim();
+                    
+                    if(!clientName || !table) {
+                        toggleSpinner(false);
+                        return window.showToast("Por favor ingresa tu Nombre y Mesa", "warning");
+                    }
+
+                    await addDoc(collection(db, 'orders'), {
+                        uid: currentUser.uid, 
+                        clientName: clientName,
+                        table: table,
+                        items: itemsToSave,
+                        total: total,
+                        status: 'Pendiente',
+                        waiter: null,
+                        timestamp: Date.now(),
+                        dateStr: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                    });
+                    
+                    localState.cart = [];
+                    window.closeCart();
+                    updateCartUI();
+                    document.getElementById('order-client-name').value = '';
+                    document.getElementById('order-table').value = '';
+                    window.showToast("¡Pedido enviado a cocina!", "success");
+                }
             } catch (error) {
                 console.error(error);
-                window.showToast("Error de permisos en Base de Datos", "error");
+                window.showToast("Error de base de datos", "error");
+            } finally {
+                toggleSpinner(false);
             }
         };
 
         window.submitReview = async (type) => {
+            const text = document.getElementById('customer-review-text').value.trim();
+            if(!text) return window.showToast("Escribe algo", "warning");
             try {
-                if (type === 'customer') {
-                    const text = document.getElementById('customer-review-text').value.trim();
-                    if(!text) return window.showToast("Escribe algo", "warning");
-                    await addDoc(collection(db, 'reviews'), { type: 'customer', text: text, timestamp: Date.now() });
-                    document.getElementById('customer-review-text').value = '';
-                    window.showToast("¡Gracias!", "success");
-                } else if (type === 'waiter') {
-                    const text = document.getElementById('waiter-review-text').value.trim();
-                    if(!text) return window.showToast("No puede estar vacía", "warning");
-                    await addDoc(collection(db, 'reviews'), { type: 'waiter', author: localState.staffName, target: localState.targetOrderForReview, text: text, timestamp: Date.now() });
-                    window.closeWaiterReview();
-                    window.showToast("Nota guardada", "success");
-                }
+                await addDoc(collection(db, 'reviews'), { type: 'customer', text: text, timestamp: Date.now() });
+                document.getElementById('customer-review-text').value = '';
+                window.showToast("¡Gracias por tu opinión!", "success");
             } catch (e) { console.error(e); window.showToast("Error", "error"); }
         };
 
         function renderPublicReviews() {
             const container = document.getElementById('public-reviews-container');
-            const publicReviews = localState.reviews.filter(r => r.type === 'customer');
-            if(publicReviews.length === 0) {
-                container.innerHTML = `<p class="text-center text-sm text-slate-400 py-4">Sin reseñas aún.</p>`;
+            if(localState.reviews.length === 0) {
+                container.innerHTML = `<p class="text-center text-sm text-slate-400 py-4">Sé el primero en dejar una reseña.</p>`;
                 return;
             }
-            container.innerHTML = publicReviews.map(r => `
+            container.innerHTML = localState.reviews.slice(0, 10).map(r => `
                 <div class="bg-white border border-slate-100 p-5 rounded-3xl shadow-soft">
                     <p class="text-sm font-medium text-slate-700 italic">"${r.text}"</p>
                 </div>
             `).join('');
         }
 
-        // --- SALONERO LÓGICA ---
+        // --- SALONERO ---
         window.filterWaiterOrders = (status) => {
             localState.waiterFilter = status;
-            ['Pendiente', 'Aceptada', 'Completada'].forEach(s => {
+            ['Pendiente', 'Aceptada', 'Completada', 'Reservas'].forEach(s => {
                 const btn = document.getElementById(`btn-filter-${s}`);
-                if (s === status) btn.classList.add('bg-secondary', 'text-white');
-                else btn.classList.remove('bg-secondary', 'text-white');
+                if (s === status) btn.className = "px-5 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 bg-secondary text-white shadow-md whitespace-nowrap";
+                else btn.className = "px-5 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 whitespace-nowrap";
             });
             renderWaiterOrders();
         };
@@ -713,6 +842,31 @@
             if (localState.role !== 'waiter') return;
             const container = document.getElementById('waiter-orders-container');
             
+            if(localState.waiterFilter === 'Reservas') {
+                if(localState.reservations.length === 0) {
+                    container.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 font-bold">No hay reservas próximas.</div>`;
+                    return;
+                }
+                container.innerHTML = localState.reservations.map(res => `
+                    <div class="bg-white rounded-3xl shadow-soft border border-slate-200 p-6 flex flex-col relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-blue-100 text-blue-800 text-[10px] font-black px-3 py-1 rounded-bl-xl">RESERVA</div>
+                        <h3 class="font-black text-xl text-slate-800 mb-1">${res.clientName}</h3>
+                        <p class="text-sm font-bold text-slate-500 mb-3"><i class="ph-bold ph-calendar"></i> ${res.date} a las ${res.time} • ${res.guests} personas</p>
+                        
+                        ${res.preorderItems.length > 0 ? `
+                        <div class="bg-orange-50 p-3 rounded-xl mb-4 border border-orange-100">
+                            <p class="text-xs font-bold text-orange-800 mb-2 uppercase">Pre-orden de Menú:</p>
+                            <ul class="space-y-1 text-sm text-slate-700 font-medium">
+                                ${res.preorderItems.map(i => `<li><span class="text-primary">${i.qty}x</span> ${i.name}</li>`).join('')}
+                            </ul>
+                        </div>
+                        ` : '<p class="text-xs text-slate-400 italic mb-4">Sin pre-orden de comida.</p>'}
+                    </div>
+                `).join('');
+                return;
+            }
+
+            // Filtrar Pedidos Normales
             let displayOrders = localState.orders.filter(o => {
                 if (localState.waiterFilter === 'Pendiente') return o.status === 'Pendiente';
                 if (localState.waiterFilter === 'Aceptada') return o.status === 'Aceptada' && o.waiter === localState.staffName;
@@ -728,28 +882,27 @@
                 let actionButtons = '';
                 
                 if (order.status === 'Pendiente') {
-                    // La regla update permite a waiters alterar SOLO 'status' y 'waiter'.
                     actionButtons = `
                         <div class="flex gap-3 w-full mt-4">
-                            <button onclick="window.updateOrderStatus('${order.id}', 'Rechazada')" class="px-4 py-3 bg-red-50 text-red-600 rounded-xl font-bold"><i class="ph-bold ph-x"></i></button>
-                            <button onclick="window.updateOrderStatus('${order.id}', 'Aceptada')" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold shadow-md">Atender <i class="ph-bold ph-arrow-right"></i></button>
+                            <button onclick="window.updateOrderStatus('${order.id}', 'Rechazada')" class="px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold transition-colors"><i class="ph-bold ph-x"></i></button>
+                            <button onclick="window.updateOrderStatus('${order.id}', 'Aceptada')" class="flex-1 bg-primary hover:bg-primaryDark text-white py-3 rounded-xl font-bold shadow-md transition-colors">Atender <i class="ph-bold ph-arrow-right"></i></button>
                         </div>`;
                 } else if (order.status === 'Aceptada') {
-                    actionButtons = `<button onclick="window.updateOrderStatus('${order.id}', 'Completada')" class="w-full mt-4 bg-green-500 text-white py-3 rounded-xl font-bold shadow-md">Marcar Entregado</button>`;
-                } else if (order.status === 'Completada') {
-                     actionButtons = `<button onclick="window.openWaiterReview('${order.table}')" class="w-full mt-4 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold">Añadir Nota</button>`;
+                    actionButtons = `<button onclick="window.updateOrderStatus('${order.id}', 'Completada')" class="w-full mt-4 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold shadow-md transition-colors">Marcar Entregado</button>`;
                 }
 
                 return `
                 <div class="bg-white rounded-3xl shadow-soft border border-slate-200 p-6 flex flex-col">
-                    <div class="flex justify-between mb-4 border-b pb-2">
-                        <h3 class="font-black text-xl text-slate-800">${order.table}</h3>
-                        <span class="text-xs font-bold px-2 py-1 bg-slate-100 rounded">${order.status}</span>
+                    <div class="flex justify-between items-start mb-4 border-b pb-3">
+                        <div>
+                            <h3 class="font-black text-xl text-slate-800 leading-tight">${order.table}</h3>
+                            <p class="text-xs font-bold text-slate-500 uppercase flex items-center gap-1 mt-1"><i class="ph-bold ph-user"></i> ${order.clientName}</p>
+                        </div>
+                        <span class="text-[10px] font-black px-2 py-1 bg-slate-100 text-slate-600 rounded uppercase tracking-wider">${order.status}</span>
                     </div>
-                    <ul class="space-y-2 flex-1 mb-4 text-sm text-slate-600">
-                        ${order.items.map(item => `<li><b class="text-primary">${item.qty}x</b> ${item.name}</li>`).join('')}
+                    <ul class="space-y-2 flex-1 mb-4 text-sm text-slate-700 font-medium">
+                        ${order.items.map(item => `<li><span class="text-primary font-black">${item.qty}x</span> ${item.name}</li>`).join('')}
                     </ul>
-                    <div class="text-lg font-black text-slate-800 text-right">₡${order.total.toLocaleString('es-CR')}</div>
                     ${actionButtons}
                 </div>
             `}).join('');
@@ -757,92 +910,117 @@
 
         window.updateOrderStatus = async (orderId, newStatus) => {
             try {
-                // Cumple con la regla de update: solo manda 'status' y 'waiter'
-                await updateDoc(doc(db, 'orders', orderId), { 
-                    status: newStatus,
-                    waiter: localState.staffName 
-                });
-                window.showToast("Estado actualizado", "success");
+                toggleSpinner(true, "Actualizando...");
+                await updateDoc(doc(db, 'orders', orderId), { status: newStatus, waiter: localState.staffName });
+                window.showToast(`Orden ${newStatus}`, "success");
             } catch (error) {
-                console.error(error); window.showToast("Error de permisos en BD", "error");
-            }
+                console.error(error); window.showToast("Error de BD", "error");
+            } finally { toggleSpinner(false); }
         };
 
-        window.openWaiterReview = (t) => { localState.targetOrderForReview = t; document.getElementById('waiter-review-modal').classList.remove('hidden'); };
-        window.closeWaiterReview = () => { document.getElementById('waiter-review-modal').classList.add('hidden'); };
-
-        // --- ADMIN LÓGICA ---
-        function renderAdminDashboard() {
-            if (localState.role !== 'admin') return;
-
-            const completed = localState.orders.filter(o => o.status === 'Completada');
-            const totalRev = completed.reduce((s, o) => s + o.total, 0);
-
-            document.getElementById('admin-revenue').innerText = `₡${totalRev.toLocaleString('es-CR')}`;
-            document.getElementById('admin-active-orders').innerText = localState.orders.filter(o => o.status === 'Aceptada' || o.status === 'Pendiente').length;
-            document.getElementById('admin-profit').innerText = `₡${(totalRev * 0.4).toLocaleString('es-CR')}`; // Estimado 40%
-
-            // Saloneros Stats
-            const wStats = {};
-            localState.orders.forEach(o => {
-                if (o.waiter && (o.status === 'Completada' || o.status === 'Rechazada')) {
-                    if(!wStats[o.waiter]) wStats[o.waiter] = {c:0, r:0};
-                    o.status === 'Completada' ? wStats[o.waiter].c++ : wStats[o.waiter].r++;
-                }
-            });
-            document.getElementById('admin-waiters-stats').innerHTML = Object.keys(wStats).map(name => `
-                <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    <span class="font-bold text-slate-800">${name}</span>
-                    <div class="flex gap-2 text-sm"><span class="text-green-600 bg-green-50 px-2 rounded">✓ ${wStats[name].c}</span> <span class="text-red-500 bg-red-50 px-2 rounded">✗ ${wStats[name].r}</span></div>
-                </div>
-            `).join('') || '<p class="text-sm text-slate-400">Sin datos</p>';
-
-            // Órdenes Recientes
-            document.getElementById('admin-all-orders').innerHTML = localState.orders.slice(0, 15).map(o => `
-                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center text-sm">
-                    <div><b>${o.table}</b> <span class="text-xs text-slate-400 ml-2">${o.status}</span></div>
-                    <div class="font-bold">₡${o.total.toLocaleString()}</div>
-                </div>
-            `).join('');
-
-            renderAdminMenu();
-        }
-
-        // CUMPLE REGLA DE 3 FOTOS EN MENÚ
+        // --- ADMIN : GESTIÓN DE MENÚ MULTIMEDIA ---
         window.saveMenuItem = async () => {
+            const id = document.getElementById('edit-menu-id').value;
             const name = document.getElementById('new-menu-name').value.trim();
             const desc = document.getElementById('new-menu-desc').value.trim();
             const price = Number(document.getElementById('new-menu-price').value);
             const category = document.getElementById('new-menu-cat').value.trim() || 'Platos Fuertes';
             
-            const p1 = document.getElementById('new-menu-p1').value.trim();
-            const p2 = document.getElementById('new-menu-p2').value.trim();
-            const p3 = document.getElementById('new-menu-p3').value.trim();
+            const fileInput = document.getElementById('new-menu-photos');
+            const files = fileInput.files;
 
-            if(!name || !desc || !price) return window.showToast("Llena Nombre, Desc. y Precio", "error");
-            if(!p1 || !p2 || !p3) return window.showToast("La regla exige exactamente 3 URLs de fotos", "warning");
+            if(!name || !desc || !price) return window.showToast("Llena Nombre, Desc. y Precio", "warning");
+
+            let photoUrls = [];
+
+            // Regla: 3 fotos
+            if (!id && files.length !== 3) {
+                return window.showToast("Para crear, DEBES seleccionar exactamente 3 fotos", "error");
+            }
 
             try {
-                // Cumple con la validación exacta: data.keys().hasAll(['name', 'description', 'price', 'photos'])
-                await addDoc(collection(db, 'menu'), {
+                toggleSpinner(true, "Subiendo imágenes...");
+                
+                // Si hay archivos seleccionados, los subimos (Creando o Editando)
+                if (files.length > 0) {
+                    if(files.length !== 3) {
+                         toggleSpinner(false);
+                         return window.showToast("Selecciona exactamente 3 fotos", "error");
+                    }
+                    for (let i = 0; i < files.length; i++) {
+                        const fileRef = ref(storage, `menu_images/${Date.now()}_${files[i].name}`);
+                        await uploadBytes(fileRef, files[i]);
+                        const url = await getDownloadURL(fileRef);
+                        photoUrls.push(url);
+                    }
+                } else if (id) {
+                    // Si estamos editando y NO seleccionó fotos, mantenemos las viejas
+                    const existingItem = localState.menu.find(m => m.id === id);
+                    photoUrls = existingItem.photos;
+                }
+
+                const menuData = {
                     name: name,
                     description: desc,
                     price: price,
-                    photos: [p1, p2, p3],
-                    category: category
-                });
+                    category: category,
+                    photos: photoUrls
+                };
+
+                toggleSpinner(true, "Guardando en Base de Datos...");
                 
-                window.showToast("Producto agregado a la BD", "success");
-                ['new-menu-name', 'new-menu-desc', 'new-menu-price', 'new-menu-cat', 'new-menu-p1', 'new-menu-p2', 'new-menu-p3'].forEach(id => document.getElementById(id).value = '');
+                if (id) {
+                    await updateDoc(doc(db, 'menu', id), menuData);
+                    window.showToast("Producto actualizado", "success");
+                } else {
+                    await addDoc(collection(db, 'menu'), menuData);
+                    window.showToast("Nuevo producto agregado", "success");
+                }
+                
+                window.cancelEdit();
             } catch (error) {
                 console.error(error);
-                window.showToast("Permiso denegado. ¿Estás como Admin en la BD?", "error");
+                window.showToast("Error subiendo datos. Verifica permisos.", "error");
+            } finally {
+                toggleSpinner(false);
             }
         };
 
+        window.editMenuItem = (id) => {
+            const item = localState.menu.find(m => m.id === id);
+            if(!item) return;
+            
+            document.getElementById('edit-menu-id').value = item.id;
+            document.getElementById('new-menu-name').value = item.name;
+            document.getElementById('new-menu-desc').value = item.description;
+            document.getElementById('new-menu-price').value = item.price;
+            document.getElementById('new-menu-cat').value = item.category || '';
+            
+            document.getElementById('form-menu-title').innerText = "Editar Producto";
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+            document.getElementById('photo-preview-text').classList.remove('hidden');
+            document.getElementById('new-menu-photos').value = ""; // Limpiar files
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        window.cancelEdit = () => {
+            document.getElementById('edit-menu-id').value = '';
+            document.getElementById('form-menu-title').innerText = "Nuevo Producto";
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+            document.getElementById('photo-preview-text').classList.add('hidden');
+            ['new-menu-name', 'new-menu-desc', 'new-menu-price', 'new-menu-cat', 'new-menu-photos'].forEach(id => document.getElementById(id).value = '');
+        }
+
         window.deleteMenuItem = async (id) => {
-            try { await deleteDoc(doc(db, 'menu', id)); window.showToast("Producto eliminado", "info"); } 
+            if(!confirm("¿Borrar este producto del menú?")) return;
+            try { 
+                toggleSpinner(true, "Borrando...");
+                await deleteDoc(doc(db, 'menu', id)); 
+                window.showToast("Producto eliminado", "info"); 
+            } 
             catch (e) { window.showToast("Error al borrar", "error"); }
+            finally { toggleSpinner(false); }
         }
 
         function renderAdminMenu() {
@@ -850,19 +1028,104 @@
             if(!container) return;
 
             if(localState.menu.length === 0) {
-                container.innerHTML = `<p class="text-slate-400 text-sm italic">Menú vacío en la Base de Datos.</p>`;
+                container.innerHTML = `<p class="text-white/50 text-sm italic">Menú vacío.</p>`;
                 return;
             }
 
-            container.innerHTML = localState.menu.map(item => `
-                <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center group">
-                    <div>
-                        <h5 class="font-bold text-slate-200 text-sm">${item.name} <span class="text-xs text-primary font-normal ml-2">₡${item.price}</span></h5>
-                        <p class="text-[10px] text-slate-500 line-clamp-1">${item.photos && item.photos.length >= 3 ? '✓ 3 Fotos validadas' : '⚠ Faltan fotos'}</p>
+            container.innerHTML = localState.menu.map(item => {
+                const bg = item.photos && item.photos.length > 0 ? `background-image: url('${item.photos[0]}'); background-size: cover;` : '';
+                return `
+                <div class="bg-slate-800/80 backdrop-blur-sm p-3 rounded-2xl border border-slate-700 flex gap-3 items-center group">
+                    <div class="w-12 h-12 rounded-xl flex-shrink-0 bg-slate-700" style="${bg}"></div>
+                    <div class="flex-1">
+                        <h5 class="font-bold text-white text-sm leading-tight">${item.name}</h5>
+                        <p class="text-xs text-primary font-bold">₡${item.price.toLocaleString()}</p>
                     </div>
-                    <button onclick="window.deleteMenuItem('${item.id}')" class="text-red-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2"><i class="ph-fill ph-trash"></i></button>
+                    <div class="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="window.editMenuItem('${item.id}')" class="bg-slate-700 hover:bg-slate-600 text-white p-2 rounded-lg"><i class="ph-bold ph-pencil-simple"></i></button>
+                        <button onclick="window.deleteMenuItem('${item.id}')" class="bg-red-500/20 hover:bg-red-500 text-red-300 hover:text-white p-2 rounded-lg transition-colors"><i class="ph-bold ph-trash"></i></button>
+                    </div>
                 </div>
-            `).join('');
+            `}).join('');
+        }
+
+        function renderAdminDashboard() {
+            if (localState.role !== 'admin') return;
+
+            const today = new Date().toLocaleDateString();
+            
+            // Ventas de Hoy
+            const completedToday = localState.orders.filter(o => o.status === 'Completada' && new Date(o.timestamp).toLocaleDateString() === today);
+            const totalRevToday = completedToday.reduce((s, o) => s + o.total, 0);
+
+            document.getElementById('admin-revenue-today').innerText = `₡${totalRevToday.toLocaleString('es-CR')}`;
+            document.getElementById('admin-active-orders').innerText = localState.orders.filter(o => o.status === 'Aceptada' || o.status === 'Pendiente').length;
+            document.getElementById('admin-reservations-count').innerText = localState.reservations.length;
+        }
+
+        // --- REPORTES ---
+        function downloadCSV(filename, text) {
+            const blob = new Blob(["\uFEFF"+text], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        window.downloadWaiterReport = () => {
+            let csv = "Salonero,Ordenes Completadas,Ordenes Rechazadas,Total Generado\n";
+            const wStats = {};
+            
+            localState.orders.forEach(o => {
+                if (o.waiter && (o.status === 'Completada' || o.status === 'Rechazada')) {
+                    if(!wStats[o.waiter]) wStats[o.waiter] = {c:0, r:0, total:0};
+                    if(o.status === 'Completada') {
+                        wStats[o.waiter].c++;
+                        wStats[o.waiter].total += o.total;
+                    } else {
+                        wStats[o.waiter].r++;
+                    }
+                }
+            });
+
+            for (const [name, stats] of Object.entries(wStats)) {
+                csv += `${name},${stats.c},${stats.r},₡${stats.total}\n`;
+            }
+
+            downloadCSV(`Reporte_Saloneros_${new Date().toLocaleDateString()}.csv`, csv);
+            window.showToast("Descargando reporte...", "info");
+        };
+
+        window.downloadSalesMonthReport = () => {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            let csv = "Fecha,Hora,Cliente,Mesa,Estado,Salonero,Total\n";
+            let grandTotal = 0;
+
+            const monthOrders = localState.orders.filter(o => {
+                const d = new Date(o.timestamp);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            });
+
+            monthOrders.forEach(o => {
+                const d = new Date(o.timestamp);
+                const fecha = d.toLocaleDateString();
+                const hora = d.toLocaleTimeString();
+                csv += `${fecha},${hora},"${o.clientName}","${o.table}",${o.status},${o.waiter || 'N/A'},₡${o.total}\n`;
+                if(o.status === 'Completada') grandTotal += o.total;
+            });
+
+            csv += `\n,,,,,TOTAL MES:,₡${grandTotal}\n`;
+
+            downloadCSV(`Reporte_Ventas_Mes_${currentMonth+1}_${currentYear}.csv`, csv);
+            window.showToast("Descargando ventas...", "info");
         }
 
         // --- ARRANQUE ---
