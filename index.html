@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sistema de Restaurante Pro V2 - Firebase</title>
+    <title>Sistema de Restaurante Pro V2 - Firebase Roles</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <style>
@@ -18,9 +18,6 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
-        @keyframes bounce-subtle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-        
-        .animate-bounce-subtle { animation: bounce-subtle 2s infinite ease-in-out; }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -41,7 +38,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Custom Toast */
         #toast-container { pointer-events: none; }
         .toast { pointer-events: auto; transition: all 0.3s ease; }
     </style>
@@ -49,16 +45,8 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { 
-                        primary: '#ea580c', 
-                        primaryDark: '#c2410c',
-                        secondary: '#0f172a',
-                        surface: '#f8fafc'
-                    },
-                    boxShadow: {
-                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
-                        'float': '0 10px 25px -5px rgba(234, 88, 12, 0.3)'
-                    }
+                    colors: { primary: '#ea580c', primaryDark: '#c2410c', secondary: '#0f172a', surface: '#f8fafc' },
+                    boxShadow: { 'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)', 'float': '0 10px 25px -5px rgba(234, 88, 12, 0.3)' }
                 }
             }
         }
@@ -66,19 +54,18 @@
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen relative overflow-x-hidden">
 
-    <!-- Contenedor de Toasts -->
+    <!-- Toasts -->
     <div id="toast-container" class="fixed top-4 left-0 right-0 z-[110] flex flex-col items-center gap-2 px-4"></div>
 
-    <!-- -->
+    <!-- Pantalla de Carga -->
     <div id="loading-screen" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center">
         <div class="loader mb-6 shadow-float"></div>
         <h2 class="text-xl font-bold text-slate-800 mb-1">Iniciando Sistema</h2>
-        <p class="text-slate-500 font-medium animate-pulse">Conectando a la base de datos...</p>
+        <p class="text-slate-500 font-medium animate-pulse">Conectando a Firebase...</p>
     </div>
 
-    <!-- -->
+    <!-- Pantalla de Login -->
     <div id="login-view" class="hidden min-h-screen flex items-center justify-center p-4 bg-secondary relative overflow-hidden">
-        <!-- Decoración de fondo -->
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
             <div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/20 blur-[120px]"></div>
             <div class="absolute top-[60%] -right-[10%] w-[50%] h-[50%] rounded-full bg-blue-500/10 blur-[120px]"></div>
@@ -93,33 +80,27 @@
 
             <button onclick="window.loginAs('client')" class="group w-full bg-primary hover:bg-primaryDark text-white font-bold py-3.5 rounded-xl mb-6 transition-all duration-200 shadow-float flex justify-center items-center gap-2 active:scale-95">
                 <i class="ph ph-fork-knife text-xl group-hover:rotate-12 transition-transform"></i>
-                Soy Cliente (Ver Menú)
+                Soy Cliente (Hacer Pedido)
             </button>
             
             <div class="flex items-center my-6">
                 <div class="flex-grow border-t border-slate-200"></div>
-                <span class="px-3 text-xs font-bold text-slate-400 tracking-wider">ACCESO PERSONAL</span>
+                <span class="px-3 text-xs font-bold text-slate-400 tracking-wider">PERSONAL</span>
                 <div class="flex-grow border-t border-slate-200"></div>
             </div>
 
             <div class="relative mb-4">
                 <i class="ph ph-lock-key absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 text-xl"></i>
-                <input type="password" id="pin-input" placeholder="Ingresa tu PIN" class="w-full text-center text-2xl tracking-[0.2em] font-bold bg-slate-50 border border-slate-200 rounded-xl py-3.5 pl-10 pr-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all">
+                <input type="password" id="pin-input" placeholder="PIN de Personal" class="w-full text-center text-2xl tracking-[0.2em] font-bold bg-slate-50 border border-slate-200 rounded-xl py-3.5 pl-10 pr-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all">
             </div>
             
             <button onclick="window.checkPin()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3.5 rounded-xl transition-all duration-200 shadow active:scale-95 flex justify-center items-center gap-2">
-                <i class="ph ph-sign-in text-xl"></i> Entrar al Sistema
+                <i class="ph ph-sign-in text-xl"></i> Entrar
             </button>
-
-            <div class="mt-6 p-4 bg-slate-50 rounded-xl text-xs text-left text-slate-500 border border-slate-100">
-                <p class="font-bold text-slate-700 mb-1 flex items-center gap-1"><i class="ph ph-info text-primary"></i> PINs de Demostración:</p>
-                <p>Saloneros: 1111 (Carlos), 2222 (Ana)</p>
-                <p>Admin: 9999</p>
-            </div>
         </div>
     </div>
 
-    <!-- -->
+    <!-- Navegación Personal -->
     <nav id="staff-nav" class="hidden bg-secondary text-white p-4 shadow-md sticky top-0 z-50">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -139,10 +120,9 @@
         </div>
     </nav>
 
-    <!-- -->
+    <!-- VISTA CLIENTE -->
     <div id="client-view" class="hidden max-w-md mx-auto bg-slate-50 min-h-screen relative shadow-2xl overflow-hidden pb-24">
         
-        <!-- Header Cliente -->
         <header class="glass-header text-white px-6 py-8 rounded-b-[2.5rem] shadow-md relative overflow-hidden z-20">
             <div class="absolute -right-10 -top-10 bg-white/20 w-40 h-40 rounded-full blur-3xl"></div>
             <div class="absolute -left-10 bottom-0 bg-yellow-500/20 w-32 h-32 rounded-full blur-2xl"></div>
@@ -157,14 +137,11 @@
                 </div>
                 <div>
                     <h1 class="text-2xl font-black mb-0.5 tracking-tight">El Buen Sabor</h1>
-                    <p class="text-sm font-medium text-white/80 flex items-center gap-1">
-                        <i class="ph-fill ph-star text-yellow-300"></i> 4.8 (120+ reseñas)
-                    </p>
+                    <p class="text-sm font-medium text-white/80 flex items-center gap-1">¡Haz tu pedido en línea!</p>
                 </div>
             </div>
         </header>
 
-        <!-- Navegación por Tabs -->
         <div class="flex px-4 mt-4 gap-2 relative z-10">
             <button onclick="window.setClientTab('menu')" id="tab-menu" class="flex-1 py-3 px-4 font-bold rounded-2xl text-white bg-secondary shadow-md transition-all flex justify-center items-center gap-2">
                 <i class="ph ph-book-open"></i> Menú
@@ -174,81 +151,60 @@
             </button>
         </div>
 
-        <!-- Sección de Menú -->
+        <!-- Menú Cliente -->
         <div id="client-menu-section" class="slide-up">
             <div class="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-md py-4 mt-2">
-                <div class="flex overflow-x-auto gap-2 px-4 no-scrollbar" id="categories-container">
-                    <!-- Las categorías se insertan aquí vía JS -->
-                </div>
+                <div class="flex overflow-x-auto gap-2 px-4 no-scrollbar" id="categories-container"></div>
             </div>
-            
-            <div class="px-4 pb-6 space-y-4" id="menu-container">
-                <!-- Los items del menú se insertan aquí vía JS -->
-            </div>
+            <div class="px-4 pb-6 space-y-4" id="menu-container"></div>
         </div>
 
-        <!-- Sección de Reseñas (Cliente) -->
+        <!-- Reseñas Cliente -->
         <div id="client-reviews-section" class="hidden slide-up px-4 py-6">
             <div class="bg-white rounded-3xl p-5 mb-8 shadow-soft border border-slate-100">
                 <div class="flex items-center gap-2 mb-3">
                     <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-primary">
                         <i class="ph-fill ph-chat-teardrop-text"></i>
                     </div>
-                    <h3 class="font-bold text-slate-800">¿Qué te pareció todo?</h3>
+                    <h3 class="font-bold text-slate-800">Deja tu reseña</h3>
                 </div>
-                <textarea id="customer-review-text" rows="3" class="w-full rounded-2xl bg-slate-50 border border-slate-200 p-4 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all mb-3 resize-none" placeholder="Cuéntanos tu experiencia de hoy..."></textarea>
+                <textarea id="customer-review-text" rows="3" class="w-full rounded-2xl bg-slate-50 border border-slate-200 p-4 text-sm focus:border-primary focus:ring-2 focus:ring-primary/10 focus:outline-none transition-all mb-3 resize-none" placeholder="¿Cómo estuvo todo?"></textarea>
                 <button onclick="window.submitReview('customer')" class="w-full bg-secondary hover:bg-slate-800 text-white font-bold py-3 rounded-xl shadow transition-colors active:scale-95 flex justify-center items-center gap-2">
                     Enviar Reseña <i class="ph ph-paper-plane-right"></i>
                 </button>
             </div>
-            
-            <h3 class="font-bold text-slate-800 mb-4 px-1 flex items-center gap-2">
-                <i class="ph-duotone ph-users"></i> Lo que dicen otros clientes:
-            </h3>
-            <div id="public-reviews-container" class="space-y-4">
-                <!-- Reseñas aquí -->
-            </div>
+            <h3 class="font-bold text-slate-800 mb-4 px-1 flex items-center gap-2"><i class="ph-duotone ph-users"></i> Comentarios:</h3>
+            <div id="public-reviews-container" class="space-y-4"></div>
         </div>
 
-        <!-- Barra del Carrito Flotante -->
+        <!-- Carrito Cliente -->
         <div id="cart-bar" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm bg-secondary text-white rounded-2xl shadow-float p-3 flex justify-between items-center z-40 slide-up border border-slate-700">
             <div class="pl-3 flex flex-col justify-center">
                 <span class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Orden</span>
                 <span class="font-black text-xl leading-none mt-0.5" id="cart-total-text">₡0</span>
             </div>
             <button onclick="window.openCart()" class="bg-primary hover:bg-primaryDark px-6 py-3 rounded-xl font-bold flex items-center gap-3 transition-colors active:scale-95">
-                Ver Orden 
-                <span id="cart-count" class="bg-white text-primary text-sm font-black w-7 h-7 flex items-center justify-center rounded-full shadow-inner pop-in">0</span>
+                Ver Orden <span id="cart-count" class="bg-white text-primary text-sm font-black w-7 h-7 flex items-center justify-center rounded-full shadow-inner pop-in">0</span>
             </button>
         </div>
 
-        <!-- Modal del Carrito -->
         <div id="cart-modal" class="hidden fixed inset-0 bg-secondary/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center fade-in">
             <div class="bg-white w-full sm:w-[420px] sm:rounded-3xl rounded-t-3xl p-6 max-h-[90vh] flex flex-col shadow-2xl slide-up relative">
-                
                 <button onclick="window.closeCart()" class="absolute top-6 right-6 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
                     <i class="ph ph-x"></i>
                 </button>
-
                 <div class="flex items-center gap-3 mb-6">
-                    <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-                        <i class="ph-fill ph-shopping-bag text-xl"></i>
-                    </div>
+                    <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary"><i class="ph-fill ph-shopping-bag text-xl"></i></div>
                     <h2 class="text-2xl font-black text-slate-800">Tu Pedido</h2>
                 </div>
-                
                 <div class="mb-5 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Identificación de Orden</label>
                     <div class="relative">
                         <i class="ph ph-map-pin absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 text-lg"></i>
-                        <input type="text" id="order-table" placeholder="Ej: Mesa 4 o Juan Pérez" class="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 font-medium">
+                        <input type="text" id="order-table" placeholder="Ej: Mesa 4 o Tu Nombre" class="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 font-medium">
                     </div>
                 </div>
-                
-                <div id="cart-items" class="flex-1 overflow-y-auto space-y-3 mb-6 pr-1 no-scrollbar min-h-[150px]">
-                    <!-- Items del carrito -->
-                </div>
-                
+                <div id="cart-items" class="flex-1 overflow-y-auto space-y-3 mb-6 pr-1 no-scrollbar min-h-[150px]"></div>
                 <div class="mt-auto">
                     <div class="border-t-2 border-dashed border-slate-200 pt-4 mb-5 flex justify-between items-end">
                         <span class="text-slate-500 font-bold uppercase tracking-wider text-sm">Total a pagar:</span>
@@ -262,16 +218,13 @@
         </div>
     </div>
 
-    <!-- -->
+    <!-- VISTA SALONERO -->
     <div id="waiter-view" class="hidden max-w-6xl mx-auto p-4 md:p-8 fade-in">
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-            <div>
-                <h1 class="text-3xl font-black text-slate-800 mb-1">Panel de Servicio</h1>
-                <p class="text-slate-500 font-medium text-sm">Gestiona los pedidos de tus mesas</p>
-            </div>
+        <div class="mb-8">
+            <h1 class="text-3xl font-black text-slate-800 mb-1">Panel de Servicio</h1>
+            <p class="text-slate-500 font-medium text-sm">Gestiona los pedidos de tus mesas</p>
         </div>
         
-        <!-- Pestañas de estado -->
         <div class="flex space-x-2 mb-8 overflow-x-auto no-scrollbar pb-2">
             <button onclick="window.filterWaiterOrders('Pendiente')" id="btn-filter-Pendiente" class="px-5 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 bg-secondary text-white shadow-md">
                 <i class="ph-fill ph-bell-ringing"></i> Nuevas
@@ -284,39 +237,32 @@
             </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="waiter-orders-container">
-            <!-- Órdenes del salonero -->
-        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="waiter-orders-container"></div>
 
-        <!-- Modal Reseña de Salonero -->
+        <!-- Modal Nota Salonero -->
         <div id="waiter-review-modal" class="hidden fixed inset-0 bg-secondary/80 backdrop-blur-sm z-50 flex items-center justify-center fade-in px-4">
             <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl pop-in">
                 <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-                        <i class="ph-fill ph-notebook text-xl"></i>
-                    </div>
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600"><i class="ph-fill ph-notebook text-xl"></i></div>
                     <h3 class="font-black text-xl text-slate-800">Nota Interna</h3>
                 </div>
                 <p id="waiter-review-target" class="text-sm font-bold text-slate-500 mb-4 bg-slate-50 p-2 rounded-lg inline-block"></p>
-                
-                <textarea id="waiter-review-text" rows="4" class="w-full rounded-2xl bg-slate-50 border border-slate-200 p-4 mb-6 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all resize-none" placeholder="Ej. Cliente solicitó salsa extra, dejó buena propina..."></textarea>
-                
+                <textarea id="waiter-review-text" rows="4" class="w-full rounded-2xl bg-slate-50 border border-slate-200 p-4 mb-6 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all resize-none" placeholder="Ej. Cliente solicitó salsa extra..."></textarea>
                 <div class="flex gap-3">
                     <button onclick="window.closeWaiterReview()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl font-bold transition-colors">Cancelar</button>
-                    <button onclick="window.submitReview('waiter')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold shadow-md transition-colors flex items-center justify-center gap-2">Guardar Nota <i class="ph ph-floppy-disk"></i></button>
+                    <button onclick="window.submitReview('waiter')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold shadow-md transition-colors flex items-center justify-center gap-2">Guardar <i class="ph ph-floppy-disk"></i></button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- -->
-    <div id="admin-view" class="hidden max-w-7xl mx-auto p-4 md:p-8 fade-in">
+    <!-- VISTA ADMIN -->
+    <div id="admin-view" class="hidden max-w-7xl mx-auto p-4 md:p-8 fade-in pb-20">
         <div class="mb-8">
             <h1 class="text-3xl font-black text-slate-800 mb-1">Dashboard Gerencial</h1>
-            <p class="text-slate-500 font-medium">Estadísticas y control en tiempo real.</p>
+            <p class="text-slate-500 font-medium">Estadísticas, Menú y control en tiempo real.</p>
         </div>
 
-        <!-- Tarjetas Financieras -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <!-- Ingresos -->
             <div class="bg-white p-6 rounded-3xl shadow-soft border border-slate-100 relative overflow-hidden group">
@@ -326,23 +272,19 @@
                         <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Ventas Brutas</p>
                         <h2 class="text-3xl font-black text-slate-800" id="admin-revenue">₡0</h2>
                     </div>
-                    <div class="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 shadow-sm">
-                        <i class="ph-fill ph-trend-up text-2xl"></i>
-                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 shadow-sm"><i class="ph-fill ph-trend-up text-2xl"></i></div>
                 </div>
             </div>
             
-            <!-- Costos -->
+            <!-- Órdenes Activas -->
             <div class="bg-white p-6 rounded-3xl shadow-soft border border-slate-100 relative overflow-hidden group">
-                <div class="absolute right-0 top-0 w-24 h-24 bg-red-500/10 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
+                <div class="absolute right-0 top-0 w-24 h-24 bg-blue-500/10 rounded-bl-[100px] -z-10 transition-transform group-hover:scale-110"></div>
                 <div class="flex justify-between items-start mb-4">
                     <div>
-                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Costos de Insumos</p>
-                        <h2 class="text-3xl font-black text-slate-800" id="admin-costs">₡0</h2>
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Órdenes Activas</p>
+                        <h2 class="text-3xl font-black text-slate-800" id="admin-active-orders">0</h2>
                     </div>
-                    <div class="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center text-red-600 shadow-sm">
-                        <i class="ph-fill ph-chart-line-down text-2xl"></i>
-                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm"><i class="ph-fill ph-cooking-pot text-2xl"></i></div>
                 </div>
             </div>
 
@@ -351,122 +293,113 @@
                 <div class="absolute right-0 top-0 w-32 h-32 bg-primary/20 rounded-bl-[100px] blur-xl"></div>
                 <div class="flex justify-between items-start mb-4 relative z-10">
                     <div>
-                        <p class="text-xs text-slate-300 font-bold uppercase tracking-wider mb-1">Utilidad Neta</p>
+                        <p class="text-xs text-slate-300 font-bold uppercase tracking-wider mb-1">Utilidad Estimada</p>
                         <h2 class="text-4xl font-black text-white drop-shadow-md" id="admin-profit">₡0</h2>
                     </div>
-                    <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center text-primary shadow-sm">
-                        <i class="ph-fill ph-money text-2xl text-white"></i>
-                    </div>
+                    <div class="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center text-primary shadow-sm"><i class="ph-fill ph-money text-2xl text-white"></i></div>
                 </div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Rendimiento Saloneros -->
             <div class="bg-white p-6 md:p-8 rounded-3xl shadow-soft border border-slate-100">
                 <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                    <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
-                        <i class="ph-fill ph-users-three text-xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-800">Desempeño del Personal</h3>
+                    <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600"><i class="ph-fill ph-users-three text-xl"></i></div>
+                    <h3 class="text-xl font-bold text-slate-800">Desempeño Saloneros</h3>
                 </div>
                 <div id="admin-waiters-stats" class="space-y-4"></div>
             </div>
 
-            <!-- Últimas Órdenes Globales -->
             <div class="bg-white p-6 md:p-8 rounded-3xl shadow-soft border border-slate-100">
                 <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                    <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-primary">
-                        <i class="ph-fill ph-receipt text-xl"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-800">Flujo de Órdenes Recientes</h3>
+                    <div class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-primary"><i class="ph-fill ph-receipt text-xl"></i></div>
+                    <h3 class="text-xl font-bold text-slate-800">Órdenes Globales</h3>
                 </div>
                 <div id="admin-all-orders" class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar"></div>
             </div>
         </div>
         
-        <!-- Reseñas Internas (Saloneros) -->
-        <div class="bg-white p-6 md:p-8 rounded-3xl shadow-soft border border-slate-100 mt-8">
-            <div class="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
-                    <i class="ph-fill ph-clipboard-text text-xl"></i>
+        <!-- Novedad: GESTIÓN DE MENÚ REGLA 3 FOTOS -->
+        <div class="bg-slate-800 p-6 md:p-8 rounded-3xl shadow-float mt-8 text-white relative overflow-hidden">
+            <div class="absolute right-0 top-0 w-64 h-64 bg-primary/20 rounded-bl-[200px] blur-3xl pointer-events-none"></div>
+            
+            <div class="flex items-center gap-3 mb-6 border-b border-slate-700 pb-4 relative z-10">
+                <div class="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary"><i class="ph-bold ph-pizza text-xl"></i></div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Gestor de Menú (Firebase)</h3>
+                    <p class="text-xs text-slate-400">Por seguridad, la base de datos exige: Nombre, Desc, Precio y <b>mínimo 3 fotos</b>.</p>
                 </div>
-                <h3 class="text-xl font-bold text-slate-800">Bitácora de Notas Internas</h3>
             </div>
-            <div id="admin-internal-reviews" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar p-1"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                <!-- Formulario -->
+                <div class="space-y-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-700">
+                    <h4 class="font-bold text-slate-300 mb-2">Agregar Nuevo Producto</h4>
+                    <input id="new-menu-name" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white placeholder-slate-500 focus:border-primary focus:outline-none" placeholder="Nombre (Ej: Casado)">
+                    <textarea id="new-menu-desc" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white placeholder-slate-500 focus:border-primary focus:outline-none resize-none" rows="2" placeholder="Descripción del plato..."></textarea>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <input id="new-menu-price" type="number" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white placeholder-slate-500 focus:border-primary focus:outline-none" placeholder="Precio ₡">
+                        <input id="new-menu-cat" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white placeholder-slate-500 focus:border-primary focus:outline-none" placeholder="Categoría">
+                    </div>
+
+                    <div class="space-y-2 pt-2 border-t border-slate-700">
+                        <label class="text-xs font-bold text-primary uppercase tracking-wider">Enlaces de Fotos (Min. 3 req.)</label>
+                        <input id="new-menu-p1" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-slate-300 focus:border-primary focus:outline-none" placeholder="URL Foto 1 (Ej: https://...)">
+                        <input id="new-menu-p2" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-slate-300 focus:border-primary focus:outline-none" placeholder="URL Foto 2">
+                        <input id="new-menu-p3" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-sm text-slate-300 focus:border-primary focus:outline-none" placeholder="URL Foto 3">
+                    </div>
+
+                    <button onclick="window.saveMenuItem()" class="w-full bg-primary hover:bg-primaryDark text-white font-bold py-3.5 rounded-xl shadow transition-colors mt-4">Guardar en Firestore</button>
+                </div>
+
+                <!-- Lista de Menú Activo -->
+                <div>
+                    <h4 class="font-bold text-slate-300 mb-4">Menú Actual en Base de Datos</h4>
+                    <div id="admin-menu-list" class="space-y-3 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar"></div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- -->
+    <!-- SCRIPTS -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- SISTEMA DE TOAST (NOTIFICACIONES) ---
         window.showToast = (message, type = 'success') => {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            
-            const colors = {
-                success: 'bg-green-600',
-                error: 'bg-red-600',
-                info: 'bg-blue-600',
-                warning: 'bg-orange-500'
-            };
-            
-            const icons = {
-                success: '<i class="ph-bold ph-check-circle text-lg"></i>',
-                error: '<i class="ph-bold ph-warning-circle text-lg"></i>',
-                info: '<i class="ph-bold ph-info text-lg"></i>',
-                warning: '<i class="ph-bold ph-warning text-lg"></i>'
-            };
-
+            const colors = { success: 'bg-green-600', error: 'bg-red-600', info: 'bg-blue-600', warning: 'bg-orange-500' };
+            const icons = { success: '<i class="ph-bold ph-check-circle text-lg"></i>', error: '<i class="ph-bold ph-warning-circle text-lg"></i>', info: '<i class="ph-bold ph-info text-lg"></i>', warning: '<i class="ph-bold ph-warning text-lg"></i>' };
             toast.className = `toast slide-up flex items-center gap-3 ${colors[type]} text-white px-5 py-3.5 rounded-2xl shadow-xl font-bold text-sm w-max max-w-[90vw]`;
             toast.innerHTML = `${icons[type]} <span>${message}</span>`;
-            
             container.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateY(-20px)';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-20px)'; setTimeout(() => toast.remove(), 300); }, 3500);
         };
 
-        // --- DATOS DEL RESTAURANTE ---
-        const menuData = [
-            { id: 1, name: "Casado con Carne", desc: "Arroz, frijoles, plátano, ensalada, picadillo y carne arreglada.", price: 4500, cost: 2000, category: "Platos Fuertes", emoji: "🍛", color: "bg-orange-100 text-orange-600" },
-            { id: 2, name: "Gallo Pinto Especial", desc: "Tradicional pinto con 2 huevos, natilla, plátano y pan.", price: 3000, cost: 1200, category: "Desayunos", emoji: "🍳", color: "bg-yellow-100 text-yellow-600" },
-            { id: 3, name: "Chifrijo Grande", desc: "Corteza de cerdo, frijoles tiernos, pico de gallo y chips crujientes.", price: 5500, cost: 2500, category: "Bocas", emoji: "🍲", color: "bg-red-100 text-red-600" },
-            { id: 4, name: "Fresco de Cas Natural", desc: "Refresco natural 16oz, preparado al momento.", price: 1200, cost: 400, category: "Bebidas", emoji: "🥤", color: "bg-green-100 text-green-600" },
-            { id: 5, name: "Cerveza Imperial", desc: "Bien fría, la cerveza de Costa Rica.", price: 1500, cost: 900, category: "Bebidas", emoji: "🍺", color: "bg-blue-100 text-blue-600" }
-        ];
-        
-        const categories = [
+        const defaultCategories = [
             { id: 'Todos', icon: 'ph-squares-four' },
             { id: 'Platos Fuertes', icon: 'ph-bowl-food' },
             { id: 'Desayunos', icon: 'ph-egg' },
-            { id: 'Bocas', icon: 'ph-french-fries' },
             { id: 'Bebidas', icon: 'ph-brandy' }
         ];
 
+        // Mapeo local para el UI (En producción los roles vienen de users/UID)
         const STAFF = {
             '1111': { name: 'Carlos', role: 'waiter' },
             '2222': { name: 'Ana', role: 'waiter' },
-            '3333': { name: 'Luis', role: 'waiter' },
-            '4444': { name: 'Marta', role: 'waiter' },
-            '5555': { name: 'Pedro', role: 'waiter' },
             '9999': { name: 'Administrador', role: 'admin' }
         };
 
-        // --- ESTADO GLOBAL ---
         let db, auth, currentUser;
-        
+        let unsubscribers = [];
         let localState = {
-            role: null, // 'client', 'waiter', 'admin'
+            role: null,
             staffName: null,
             category: 'Todos',
+            menu: [],
             cart: [],
             orders: [],
             reviews: [],
@@ -474,15 +407,11 @@
             targetOrderForReview: null
         };
 
-        // --- INICIALIZACIÓN FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyDhxJT_Gc3KRyG8InmzIH8PFK9Nl1cHJpM",
             authDomain: "menu-restaurantes-9b9d5.firebaseapp.com",
             projectId: "menu-restaurantes-9b9d5",
-            storageBucket: "menu-restaurantes-9b9d5.firebasestorage.app",
-            messagingSenderId: "294723386682",
-            appId: "1:294723386682:web:9a4f765d31ad64ca01e403",
-            measurementId: "G-BJ547B4DZG"
+            storageBucket: "menu-restaurantes-9b9d5.firebasestorage.app"
         };
 
         async function initApp() {
@@ -491,57 +420,75 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                // Autenticación anónima obligatoria para conectarse a tu proyecto
                 await signInAnonymously(auth);
 
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         currentUser = user;
-                        setupListeners();
                         document.getElementById('loading-screen').classList.add('hidden');
                         document.getElementById('login-view').classList.remove('hidden');
                     }
                 });
             } catch (error) {
                 console.error("Error Firebase:", error);
-                document.getElementById('loading-screen').innerHTML = `
-                    <div class="bg-red-50 text-red-600 p-6 rounded-2xl max-w-sm text-center border border-red-200">
-                        <i class="ph-fill ph-warning-circle text-4xl mb-2"></i>
-                        <h2 class="font-bold text-lg mb-1">Error de Conexión</h2>
-                        <p class="text-sm">Asegúrate de que tu proyecto de Firebase esté bien configurado.</p>
-                    </div>`;
+                window.showToast("Error conectando a BD. Revisa configuración.", "error");
             }
         }
 
-        // --- LISTENERS FIRESTORE (Regla 1 y 2) ---
-        function setupListeners() {
+        // --- SISTEMA DE LISTENERS CONDICIONALES SEGÚN ROL ---
+        function startListeners(role) {
+            unsubscribers.forEach(unsub => unsub()); // Limpiar anteriores
+            unsubscribers = [];
+
             if (!currentUser) return;
+
+            // 1. Escuchar MENÚ (Todos tienen acceso)
+            const unsubMenu = onSnapshot(collection(db, 'menu'), (snap) => {
+                localState.menu = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                if (role === 'client') renderClientMenu();
+                if (role === 'admin') renderAdminMenu();
+            }, e => console.log("Menu listener error", e));
+            unsubscribers.push(unsubMenu);
+
+            // 2. Escuchar ÓRDENES (Separado por Regla)
+            let ordersQuery;
+            if (role === 'client') {
+                // Cliente SOLO ve sus propias órdenes
+                ordersQuery = query(collection(db, 'orders'), where('uid', '==', currentUser.uid));
+            } else {
+                // Admin y Salonero ven todas
+                ordersQuery = collection(db, 'orders');
+            }
             
-            // Colección Pública: Orders
-            const ordersRef = collection(db, 'orders');
-            onSnapshot(ordersRef, (snapshot) => {
-                localState.orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const unsubOrders = onSnapshot(ordersQuery, (snap) => {
+                localState.orders = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 localState.orders.sort((a, b) => b.timestamp - a.timestamp);
                 updateUIBasedOnRole();
-            }, (error) => console.error("Error órdenes:", error));
+            }, e => console.log("Orders listener error", e));
+            unsubscribers.push(unsubOrders);
 
-            // Colección Pública: Reviews
-            const reviewsRef = collection(db, 'reviews');
-            onSnapshot(reviewsRef, (snapshot) => {
-                localState.reviews = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // 3. Escuchar RESEÑAS
+            let reviewsQuery;
+            if (role === 'client') {
+                reviewsQuery = query(collection(db, 'reviews'), where('type', '==', 'customer'));
+            } else {
+                reviewsQuery = collection(db, 'reviews');
+            }
+            
+            const unsubReviews = onSnapshot(reviewsQuery, (snap) => {
+                localState.reviews = snap.docs.map(d => ({id: d.id, ...d.data()}));
                 localState.reviews.sort((a, b) => b.timestamp - a.timestamp);
                 updateUIBasedOnRole();
-            }, (error) => console.error("Error reseñas:", error));
+            }, e => console.log("Reviews error", e));
+            unsubscribers.push(unsubReviews);
         }
 
-        // --- FUNCIONES COMUNES ---
-        
         window.loginAs = (role) => {
             localState.role = role;
             document.getElementById('login-view').classList.add('hidden');
             if (role === 'client') {
                 document.getElementById('client-view').classList.remove('hidden');
-                renderClientMenu();
+                startListeners('client');
             }
         };
 
@@ -554,25 +501,15 @@
                 document.getElementById('login-view').classList.add('hidden');
                 document.getElementById('staff-nav').classList.remove('hidden');
                 document.getElementById('staff-name-display').innerText = localState.staffName;
-                
-                const roleBadge = document.getElementById('staff-role-badge');
-                if (localState.role === 'admin') {
-                    roleBadge.innerText = 'Administrador';
-                    roleBadge.className = 'text-[10px] font-black bg-white/20 px-2 py-0.5 rounded text-white uppercase tracking-wider';
-                } else {
-                    roleBadge.innerText = 'Salonero';
-                    roleBadge.className = 'text-[10px] font-black bg-primary px-2 py-0.5 rounded text-white uppercase tracking-wider';
-                }
+                document.getElementById('staff-role-badge').innerText = localState.role === 'admin' ? 'Admin' : 'Salonero';
 
-                if (localState.role === 'waiter') {
-                    document.getElementById('waiter-view').classList.remove('hidden');
-                } else if (localState.role === 'admin') {
-                    document.getElementById('admin-view').classList.remove('hidden');
-                }
-                updateUIBasedOnRole();
-                window.showToast(`Bienvenido, ${localState.staffName}`, 'success');
+                if (localState.role === 'waiter') document.getElementById('waiter-view').classList.remove('hidden');
+                if (localState.role === 'admin') document.getElementById('admin-view').classList.remove('hidden');
+                
+                startListeners(localState.role);
+                window.showToast(`Hola ${localState.staffName}`, 'success');
             } else {
-                window.showToast("PIN incorrecto. Revisa los códigos provistos.", "error");
+                window.showToast("PIN incorrecto", "error");
             }
             document.getElementById('pin-input').value = '';
         };
@@ -580,12 +517,12 @@
         window.logout = () => {
             localState.role = null;
             localState.staffName = null;
-            document.getElementById('pin-input').value = '';
+            localState.cart = [];
+            unsubscribers.forEach(u => u());
+            unsubscribers = [];
+            
             document.querySelectorAll('#client-view, #waiter-view, #admin-view, #staff-nav').forEach(el => el.classList.add('hidden'));
             document.getElementById('login-view').classList.remove('hidden');
-            
-            // Reiniciar estado cliente si es necesario
-            localState.cart = [];
             updateCartUI();
         };
 
@@ -595,30 +532,28 @@
             if (localState.role === 'admin') renderAdminDashboard();
         }
 
-        // --- LÓGICA CLIENTE ---
+        // --- CLIENTE LÓGICA ---
         window.setClientTab = (tab) => {
             const menuBtn = document.getElementById('tab-menu');
             const reviewBtn = document.getElementById('tab-reviews');
-            
             if(tab === 'menu') {
                 document.getElementById('client-menu-section').classList.remove('hidden');
                 document.getElementById('client-reviews-section').classList.add('hidden');
-                
                 menuBtn.className = "flex-1 py-3 px-4 font-bold rounded-2xl text-white bg-secondary shadow-md transition-all flex justify-center items-center gap-2";
                 reviewBtn.className = "flex-1 py-3 px-4 font-bold rounded-2xl text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 transition-all flex justify-center items-center gap-2";
             } else {
                 document.getElementById('client-menu-section').classList.add('hidden');
                 document.getElementById('client-reviews-section').classList.remove('hidden');
-                
                 reviewBtn.className = "flex-1 py-3 px-4 font-bold rounded-2xl text-white bg-secondary shadow-md transition-all flex justify-center items-center gap-2";
                 menuBtn.className = "flex-1 py-3 px-4 font-bold rounded-2xl text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 transition-all flex justify-center items-center gap-2";
-                renderPublicReviews();
             }
         }
 
+        window.filterCategory = (cat) => { localState.category = cat; renderClientMenu(); };
+
         function renderClientMenu() {
             const catContainer = document.getElementById('categories-container');
-            catContainer.innerHTML = categories.map(cat => `
+            catContainer.innerHTML = defaultCategories.map(cat => `
                 <button onclick="window.filterCategory('${cat.id}')" 
                     class="whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 border ${localState.category === cat.id ? 'bg-primary text-white border-primary shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}">
                     <i class="ph ${cat.icon} text-lg"></i> ${cat.id}
@@ -626,64 +561,57 @@
             `).join('');
 
             const menuContainer = document.getElementById('menu-container');
-            const filteredMenu = localState.category === "Todos" ? menuData : menuData.filter(i => i.category === localState.category);
+            let filteredMenu = localState.category === "Todos" ? localState.menu : localState.menu.filter(i => i.category === localState.category);
             
-            menuContainer.innerHTML = filteredMenu.map(item => `
+            if(filteredMenu.length === 0) {
+                menuContainer.innerHTML = `<p class="text-center text-slate-400 py-10">El menú está vacío. El admin debe agregar productos.</p>`;
+                return;
+            }
+
+            menuContainer.innerHTML = filteredMenu.map(item => {
+                // Extraer la primera foto si existe según las reglas
+                const hasPhotos = item.photos && Array.isArray(item.photos) && item.photos.length > 0;
+                const bgStyle = hasPhotos ? `background-image: url('${item.photos[0]}'); background-size: cover; background-position: center;` : '';
+                const fallbackIcon = !hasPhotos ? `<span class="relative z-10 drop-shadow-sm">🍽️</span>` : '';
+
+                return `
                 <div class="bg-white border border-slate-100 rounded-3xl p-4 shadow-soft flex gap-4 items-center group hover:border-primary/20 transition-all">
-                    <div class="w-24 h-24 flex-shrink-0 ${item.color} rounded-2xl flex items-center justify-center text-5xl shadow-inner transform group-hover:scale-105 transition-transform duration-300 relative overflow-hidden">
-                        <div class="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent"></div>
-                        <span class="relative z-10 drop-shadow-sm">${item.emoji}</span>
+                    <div class="w-24 h-24 flex-shrink-0 bg-slate-200 rounded-2xl flex items-center justify-center text-4xl shadow-inner relative overflow-hidden" style="${bgStyle}">
+                        <div class="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent"></div>
+                        ${fallbackIcon}
                     </div>
                     <div class="flex-1 py-1">
                         <h3 class="font-black text-slate-800 leading-tight mb-1.5 text-[17px]">${item.name}</h3>
-                        <p class="text-xs font-medium text-slate-500 mb-3 line-clamp-2 leading-relaxed">${item.desc}</p>
+                        <p class="text-xs font-medium text-slate-500 mb-3 line-clamp-2">${item.description}</p>
                         <div class="flex justify-between items-end">
                             <span class="font-black text-primary text-lg tracking-tight">₡${item.price.toLocaleString('es-CR')}</span>
-                            <button onclick="window.addToCart(${item.id})" class="bg-slate-100 text-slate-700 font-bold w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm active:scale-90 group-hover:bg-primary/10 group-hover:text-primary">
+                            <button onclick="window.addToCart('${item.id}')" class="bg-slate-100 text-slate-700 font-bold w-10 h-10 rounded-xl flex items-center justify-center hover:bg-primary hover:text-white transition-all shadow-sm active:scale-90">
                                 <i class="ph-bold ph-plus text-lg"></i>
                             </button>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
-
-        window.filterCategory = (cat) => { localState.category = cat; renderClientMenu(); };
         
         window.addToCart = (id) => {
-            const item = menuData.find(i => i.id === id);
+            const item = localState.menu.find(i => i.id === id);
             const existing = localState.cart.find(i => i.id === id);
             if(existing) existing.qty++; else localState.cart.push({...item, qty: 1});
-            
             updateCartUI();
-            
-            // Animación visual del botón
-            const cartBtn = document.getElementById('cart-count');
-            cartBtn.classList.remove('pop-in');
-            void cartBtn.offsetWidth; // trigger reflow
-            cartBtn.classList.add('pop-in');
-            
-            window.showToast(`${item.name} agregado`, 'info');
+            const btn = document.getElementById('cart-count'); btn.classList.remove('pop-in'); void btn.offsetWidth; btn.classList.add('pop-in');
+            window.showToast("Agregado al pedido", 'info');
         };
 
-        window.removeFromCart = (id) => {
-            localState.cart = localState.cart.filter(item => item.id !== id);
-            updateCartUI();
-        };
+        window.removeFromCart = (id) => { localState.cart = localState.cart.filter(i => i.id !== id); updateCartUI(); };
 
         function updateCartUI() {
             const totalItems = localState.cart.reduce((s, i) => s + i.qty, 0);
             const totalPrice = localState.cart.reduce((s, i) => s + (i.price * i.qty), 0);
             
             const cartBar = document.getElementById('cart-bar');
-            if (totalItems === 0) {
-                cartBar.classList.add('hidden');
-                if(!document.getElementById('cart-modal').classList.contains('hidden')){
-                    window.closeCart();
-                }
-            } else {
-                cartBar.classList.remove('hidden');
-            }
+            if (totalItems === 0) { cartBar.classList.add('hidden'); window.closeCart(); } 
+            else { cartBar.classList.remove('hidden'); }
 
             document.getElementById('cart-count').innerText = totalItems;
             document.getElementById('cart-total-text').innerText = `₡${totalPrice.toLocaleString('es-CR')}`;
@@ -698,9 +626,7 @@
                             <p class="text-xs font-medium text-slate-500 mt-0.5">₡${(item.price * item.qty).toLocaleString('es-CR')}</p>
                         </div>
                     </div>
-                    <button onclick="window.removeFromCart(${item.id})" class="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 p-2.5 rounded-xl transition-colors">
-                        <i class="ph-bold ph-trash text-lg"></i>
-                    </button>
+                    <button onclick="window.removeFromCart('${item.id}')" class="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 p-2.5 rounded-xl transition-colors"><i class="ph-bold ph-trash text-lg"></i></button>
                 </div>
             `).join('');
         }
@@ -710,128 +636,75 @@
 
         window.sendOrder = async () => {
             if(localState.cart.length === 0) return;
-            
             const tableInput = document.getElementById('order-table').value.trim();
-            if (!tableInput) {
-                window.showToast("Por favor, ingresa tu mesa o nombre", "warning");
-                document.getElementById('order-table').focus();
-                return;
-            }
+            if (!tableInput) return window.showToast("Ingresa tu mesa/nombre", "warning");
 
             const total = localState.cart.reduce((s, i) => s + (i.price * i.qty), 0);
-            const totalCost = localState.cart.reduce((s, i) => s + (i.cost * i.qty), 0);
 
+            // CUMPLE REGLAS: Incluye UID del creador y Status Pendiente
             const newOrder = {
+                uid: currentUser.uid, 
                 table: tableInput,
-                items: localState.cart,
+                items: localState.cart.map(i => ({id: i.id, name: i.name, qty: i.qty, price: i.price})),
                 total: total,
-                totalCost: totalCost,
-                status: 'Pendiente', // Pendiente, Aceptada, Rechazada, Completada
+                status: 'Pendiente',
                 waiter: null,
                 timestamp: Date.now(),
                 dateStr: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
             };
 
             try {
-                // Deshabilitar botón temporalmente visualmente si quisieramos...
-                const ordersRef = collection(db, 'orders');
-                await addDoc(ordersRef, newOrder);
-                
+                await addDoc(collection(db, 'orders'), newOrder);
                 localState.cart = [];
                 window.closeCart();
                 updateCartUI();
                 document.getElementById('order-table').value = '';
-                
-                window.showToast("¡Pedido enviado a cocina exitosamente!", "success");
+                window.showToast("¡Pedido enviado a cocina!", "success");
             } catch (error) {
-                console.error("Error al enviar orden:", error);
-                window.showToast("Error al procesar el pedido. Intenta de nuevo.", "error");
+                console.error(error);
+                window.showToast("Error de permisos en Base de Datos", "error");
             }
         };
 
-        // --- LÓGICA DE RESEÑAS ---
         window.submitReview = async (type) => {
             try {
-                const reviewsRef = collection(db, 'reviews');
                 if (type === 'customer') {
                     const text = document.getElementById('customer-review-text').value.trim();
-                    if(!text) return window.showToast("Escribe algo antes de enviar", "warning");
-                    
-                    await addDoc(reviewsRef, {
-                        type: 'customer',
-                        author: 'Cliente Anónimo',
-                        text: text,
-                        timestamp: Date.now()
-                    });
+                    if(!text) return window.showToast("Escribe algo", "warning");
+                    await addDoc(collection(db, 'reviews'), { type: 'customer', text: text, timestamp: Date.now() });
                     document.getElementById('customer-review-text').value = '';
-                    window.showToast("¡Gracias por tus comentarios!", "success");
+                    window.showToast("¡Gracias!", "success");
                 } else if (type === 'waiter') {
                     const text = document.getElementById('waiter-review-text').value.trim();
-                    if(!text) return window.showToast("La nota no puede estar vacía", "warning");
-                    
-                    await addDoc(reviewsRef, {
-                        type: 'waiter',
-                        author: localState.staffName,
-                        target: localState.targetOrderForReview,
-                        text: text,
-                        timestamp: Date.now()
-                    });
+                    if(!text) return window.showToast("No puede estar vacía", "warning");
+                    await addDoc(collection(db, 'reviews'), { type: 'waiter', author: localState.staffName, target: localState.targetOrderForReview, text: text, timestamp: Date.now() });
                     window.closeWaiterReview();
-                    window.showToast("Nota interna guardada", "success");
+                    window.showToast("Nota guardada", "success");
                 }
-            } catch (error) {
-                console.error("Error al enviar reseña:", error);
-                window.showToast("Hubo un error al guardar", "error");
-            }
+            } catch (e) { console.error(e); window.showToast("Error", "error"); }
         };
 
         function renderPublicReviews() {
             const container = document.getElementById('public-reviews-container');
             const publicReviews = localState.reviews.filter(r => r.type === 'customer');
-            
             if(publicReviews.length === 0) {
-                container.innerHTML = `
-                <div class="text-center py-10 bg-slate-50 rounded-3xl border border-slate-100 border-dashed">
-                    <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mx-auto mb-3">
-                        <i class="ph-duotone ph-chat-circle-dots text-3xl"></i>
-                    </div>
-                    <p class="text-slate-500 font-medium text-sm px-4">Aún no hay reseñas.<br>¡Anímate a ser el primero!</p>
-                </div>`;
+                container.innerHTML = `<p class="text-center text-sm text-slate-400 py-4">Sin reseñas aún.</p>`;
                 return;
             }
-
             container.innerHTML = publicReviews.map(r => `
                 <div class="bg-white border border-slate-100 p-5 rounded-3xl shadow-soft">
-                    <div class="flex items-center gap-2 mb-2">
-                        <div class="flex text-yellow-400 text-sm">
-                            <i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i>
-                        </div>
-                        <span class="text-xs font-bold text-slate-400 ml-auto">${new Date(r.timestamp).toLocaleDateString()}</span>
-                    </div>
-                    <p class="text-sm font-medium text-slate-700 leading-relaxed italic">"${r.text}"</p>
+                    <p class="text-sm font-medium text-slate-700 italic">"${r.text}"</p>
                 </div>
             `).join('');
         }
 
-        // --- LÓGICA SALONERO ---
+        // --- SALONERO LÓGICA ---
         window.filterWaiterOrders = (status) => {
             localState.waiterFilter = status;
-            
-            const config = {
-                'Pendiente': { icon: 'ph-bell-ringing', text: 'Nuevas', activeClass: 'bg-secondary text-white shadow-md' },
-                'Aceptada': { icon: 'ph-cooking-pot', text: 'Mis Mesas Activas', activeClass: 'bg-blue-600 text-white shadow-md' },
-                'Completada': { icon: 'ph-check-circle', text: 'Historial', activeClass: 'bg-green-600 text-white shadow-md' }
-            };
-
             ['Pendiente', 'Aceptada', 'Completada'].forEach(s => {
                 const btn = document.getElementById(`btn-filter-${s}`);
-                if (s === status) {
-                    btn.className = `px-5 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 ${config[s].activeClass}`;
-                    btn.innerHTML = `<i class="ph-fill ${config[s].icon}"></i> ${config[s].text}`;
-                } else {
-                    btn.className = "px-5 py-2.5 rounded-full font-bold text-sm transition-all flex items-center gap-2 bg-white text-slate-600 border border-slate-200 hover:bg-slate-50";
-                    btn.innerHTML = `<i class="ph-fill ${config[s].icon}"></i> ${config[s].text}`;
-                }
+                if (s === status) btn.classList.add('bg-secondary', 'text-white');
+                else btn.classList.remove('bg-secondary', 'text-white');
             });
             renderWaiterOrders();
         };
@@ -840,225 +713,160 @@
             if (localState.role !== 'waiter') return;
             const container = document.getElementById('waiter-orders-container');
             
-            let displayOrders = [];
-            if (localState.waiterFilter === 'Pendiente') {
-                displayOrders = localState.orders.filter(o => o.status === 'Pendiente');
-            } else if (localState.waiterFilter === 'Aceptada') {
-                displayOrders = localState.orders.filter(o => o.status === 'Aceptada' && o.waiter === localState.staffName);
-            } else if (localState.waiterFilter === 'Completada') {
-                displayOrders = localState.orders.filter(o => (o.status === 'Completada' || o.status === 'Rechazada') && o.waiter === localState.staffName);
-            }
+            let displayOrders = localState.orders.filter(o => {
+                if (localState.waiterFilter === 'Pendiente') return o.status === 'Pendiente';
+                if (localState.waiterFilter === 'Aceptada') return o.status === 'Aceptada' && o.waiter === localState.staffName;
+                if (localState.waiterFilter === 'Completada') return (o.status === 'Completada' || o.status === 'Rechazada') && o.waiter === localState.staffName;
+            });
 
             if(displayOrders.length === 0) {
-                container.innerHTML = `
-                <div class="col-span-full text-center py-16 bg-white rounded-3xl border border-slate-100 border-dashed shadow-sm">
-                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mx-auto mb-4">
-                        <i class="ph-duotone ph-tray text-4xl"></i>
-                    </div>
-                    <h3 class="font-bold text-slate-700 text-lg mb-1">Bandeja Vacía</h3>
-                    <p class="text-slate-500 font-medium text-sm">No hay órdenes en esta categoría.</p>
-                </div>`;
+                container.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 font-bold">Sin órdenes aquí.</div>`;
                 return;
             }
 
             container.innerHTML = displayOrders.map(order => {
                 let actionButtons = '';
-                let borderColor = 'border-slate-200';
                 
                 if (order.status === 'Pendiente') {
-                    borderColor = 'border-orange-200 ring-2 ring-orange-100';
+                    // La regla update permite a waiters alterar SOLO 'status' y 'waiter'.
                     actionButtons = `
-                        <div class="flex gap-3 w-full mt-5">
-                            <button onclick="window.updateOrderStatus('${order.id}', 'Rechazada')" class="px-4 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-1"><i class="ph-bold ph-x"></i></button>
-                            <button onclick="window.updateOrderStatus('${order.id}', 'Aceptada')" class="flex-1 bg-primary text-white hover:bg-primaryDark py-3 rounded-xl font-bold text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">Atender Mesa <i class="ph-bold ph-arrow-right"></i></button>
+                        <div class="flex gap-3 w-full mt-4">
+                            <button onclick="window.updateOrderStatus('${order.id}', 'Rechazada')" class="px-4 py-3 bg-red-50 text-red-600 rounded-xl font-bold"><i class="ph-bold ph-x"></i></button>
+                            <button onclick="window.updateOrderStatus('${order.id}', 'Aceptada')" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold shadow-md">Atender <i class="ph-bold ph-arrow-right"></i></button>
                         </div>`;
                 } else if (order.status === 'Aceptada') {
-                    borderColor = 'border-blue-200 ring-2 ring-blue-50';
-                    actionButtons = `
-                        <button onclick="window.updateOrderStatus('${order.id}', 'Completada')" class="w-full mt-5 bg-green-500 text-white hover:bg-green-600 py-3.5 rounded-xl font-bold text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
-                            <i class="ph-bold ph-check-square text-lg"></i> Marcar Entregado
-                        </button>`;
+                    actionButtons = `<button onclick="window.updateOrderStatus('${order.id}', 'Completada')" class="w-full mt-4 bg-green-500 text-white py-3 rounded-xl font-bold shadow-md">Marcar Entregado</button>`;
                 } else if (order.status === 'Completada') {
-                    borderColor = 'border-green-100 opacity-80';
-                     actionButtons = `
-                        <button onclick="window.openWaiterReview('${order.table}')" class="w-full mt-4 bg-slate-100 text-slate-700 hover:bg-slate-200 py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2">
-                            <i class="ph-bold ph-pencil-simple"></i> Añadir Nota Cliente
-                        </button>`;
-                } else if (order.status === 'Rechazada') {
-                    borderColor = 'border-red-100 opacity-60 bg-slate-50';
+                     actionButtons = `<button onclick="window.openWaiterReview('${order.table}')" class="w-full mt-4 bg-slate-100 text-slate-700 py-3 rounded-xl font-bold">Añadir Nota</button>`;
                 }
 
-                let statusBadge = '';
-                if(order.status === 'Pendiente') statusBadge = '<div class="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1 animate-pulse"><i class="ph-fill ph-warning-circle"></i> NUEVA</div>';
-                if(order.status === 'Aceptada') statusBadge = '<div class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1"><i class="ph-fill ph-spinner-gap animate-spin"></i> EN COCINA</div>';
-                if(order.status === 'Completada') statusBadge = '<div class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1"><i class="ph-bold ph-check"></i> ENTREGADA</div>';
-                if(order.status === 'Rechazada') statusBadge = '<div class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1"><i class="ph-bold ph-x"></i> CANCELADA</div>';
-
                 return `
-                <div class="bg-white rounded-3xl shadow-soft border ${borderColor} p-6 flex flex-col transition-all">
-                    <div class="flex justify-between items-start border-b border-slate-100 pb-4 mb-4">
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5"><i class="ph ph-clock"></i> ${order.dateStr}</p>
-                            <h3 class="font-black text-slate-800 text-xl flex items-center gap-2">
-                                <i class="ph-fill ph-map-pin text-slate-300"></i> ${order.table}
-                            </h3>
-                        </div>
-                        ${statusBadge}
+                <div class="bg-white rounded-3xl shadow-soft border border-slate-200 p-6 flex flex-col">
+                    <div class="flex justify-between mb-4 border-b pb-2">
+                        <h3 class="font-black text-xl text-slate-800">${order.table}</h3>
+                        <span class="text-xs font-bold px-2 py-1 bg-slate-100 rounded">${order.status}</span>
                     </div>
-                    
-                    <ul class="flex-1 space-y-3 mb-4">
-                        ${order.items.map(item => `
-                            <li class="flex items-start text-sm bg-slate-50 p-2 rounded-lg">
-                                <span class="font-black text-primary w-8 shrink-0 bg-white rounded text-center py-0.5 border border-slate-200 mr-3">${item.qty}x</span>
-                                <span class="font-medium text-slate-700 pt-0.5">${item.name}</span>
-                            </li>
-                        `).join('')}
+                    <ul class="space-y-2 flex-1 mb-4 text-sm text-slate-600">
+                        ${order.items.map(item => `<li><b class="text-primary">${item.qty}x</b> ${item.name}</li>`).join('')}
                     </ul>
-                    
-                    <div class="flex justify-between items-center font-black text-slate-800 border-t border-slate-100 pt-4 bg-slate-50/50 -mx-6 -mb-6 p-6 rounded-b-3xl mt-auto">
-                        <span class="text-slate-500 uppercase text-xs tracking-wider">Total</span>
-                        <span class="text-2xl tracking-tight">₡${order.total.toLocaleString('es-CR')}</span>
-                    </div>
-                    
-                    <div class="px-0 relative z-10">
+                    <div class="text-lg font-black text-slate-800 text-right">₡${order.total.toLocaleString('es-CR')}</div>
                     ${actionButtons}
-                    </div>
                 </div>
             `}).join('');
         }
 
         window.updateOrderStatus = async (orderId, newStatus) => {
             try {
-                const orderRef = doc(db, 'orders', orderId);
-                const updateData = { status: newStatus };
-                if (newStatus === 'Aceptada' || newStatus === 'Rechazada') {
-                    updateData.waiter = localState.staffName;
-                }
-                await updateDoc(orderRef, updateData);
-                
-                const msgs = {
-                    'Aceptada': 'Orden aceptada',
-                    'Rechazada': 'Orden rechazada',
-                    'Completada': 'Mesa marcada como entregada'
-                };
-                window.showToast(msgs[newStatus], newStatus === 'Rechazada' ? 'info' : 'success');
+                // Cumple con la regla de update: solo manda 'status' y 'waiter'
+                await updateDoc(doc(db, 'orders', orderId), { 
+                    status: newStatus,
+                    waiter: localState.staffName 
+                });
+                window.showToast("Estado actualizado", "success");
             } catch (error) {
-                console.error("Error al actualizar orden:", error);
-                window.showToast("Error de conexión", "error");
+                console.error(error); window.showToast("Error de permisos en BD", "error");
             }
         };
 
-        window.openWaiterReview = (tableName) => {
-            localState.targetOrderForReview = tableName;
-            document.getElementById('waiter-review-target').innerHTML = `<i class="ph ph-user"></i> Cliente/Mesa: ${tableName}`;
-            document.getElementById('waiter-review-modal').classList.remove('hidden');
-        };
-        window.closeWaiterReview = () => {
-            document.getElementById('waiter-review-modal').classList.add('hidden');
-            document.getElementById('waiter-review-text').value = '';
-        };
+        window.openWaiterReview = (t) => { localState.targetOrderForReview = t; document.getElementById('waiter-review-modal').classList.remove('hidden'); };
+        window.closeWaiterReview = () => { document.getElementById('waiter-review-modal').classList.add('hidden'); };
 
-        // --- LÓGICA ADMIN ---
+        // --- ADMIN LÓGICA ---
         function renderAdminDashboard() {
             if (localState.role !== 'admin') return;
 
-            const completedOrders = localState.orders.filter(o => o.status === 'Completada');
-            const totalRev = completedOrders.reduce((s, o) => s + o.total, 0);
-            const totalCost = completedOrders.reduce((s, o) => s + o.totalCost, 0);
-            const profit = totalRev - totalCost;
+            const completed = localState.orders.filter(o => o.status === 'Completada');
+            const totalRev = completed.reduce((s, o) => s + o.total, 0);
 
             document.getElementById('admin-revenue').innerText = `₡${totalRev.toLocaleString('es-CR')}`;
-            document.getElementById('admin-costs').innerText = `₡${totalCost.toLocaleString('es-CR')}`;
-            document.getElementById('admin-profit').innerText = `₡${profit.toLocaleString('es-CR')}`;
+            document.getElementById('admin-active-orders').innerText = localState.orders.filter(o => o.status === 'Aceptada' || o.status === 'Pendiente').length;
+            document.getElementById('admin-profit').innerText = `₡${(totalRev * 0.4).toLocaleString('es-CR')}`; // Estimado 40%
 
-            // Rendimiento de saloneros
-            const waiterStats = {};
-            Object.values(STAFF).forEach(s => { if(s.role === 'waiter') waiterStats[s.name] = { completed: 0, rejected: 0 }});
-            
+            // Saloneros Stats
+            const wStats = {};
             localState.orders.forEach(o => {
-                if (o.waiter && waiterStats[o.waiter]) {
-                    if (o.status === 'Completada') waiterStats[o.waiter].completed++;
-                    if (o.status === 'Rechazada') waiterStats[o.waiter].rejected++;
+                if (o.waiter && (o.status === 'Completada' || o.status === 'Rechazada')) {
+                    if(!wStats[o.waiter]) wStats[o.waiter] = {c:0, r:0};
+                    o.status === 'Completada' ? wStats[o.waiter].c++ : wStats[o.waiter].r++;
                 }
             });
+            document.getElementById('admin-waiters-stats').innerHTML = Object.keys(wStats).map(name => `
+                <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <span class="font-bold text-slate-800">${name}</span>
+                    <div class="flex gap-2 text-sm"><span class="text-green-600 bg-green-50 px-2 rounded">✓ ${wStats[name].c}</span> <span class="text-red-500 bg-red-50 px-2 rounded">✗ ${wStats[name].r}</span></div>
+                </div>
+            `).join('') || '<p class="text-sm text-slate-400">Sin datos</p>';
 
-            document.getElementById('admin-waiters-stats').innerHTML = Object.keys(waiterStats).map(name => {
-                const total = waiterStats[name].completed + waiterStats[name].rejected;
-                const rate = total > 0 ? Math.round((waiterStats[name].completed / total) * 100) : 0;
+            // Órdenes Recientes
+            document.getElementById('admin-all-orders').innerHTML = localState.orders.slice(0, 15).map(o => `
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center text-sm">
+                    <div><b>${o.table}</b> <span class="text-xs text-slate-400 ml-2">${o.status}</span></div>
+                    <div class="font-bold">₡${o.total.toLocaleString()}</div>
+                </div>
+            `).join('');
+
+            renderAdminMenu();
+        }
+
+        // CUMPLE REGLA DE 3 FOTOS EN MENÚ
+        window.saveMenuItem = async () => {
+            const name = document.getElementById('new-menu-name').value.trim();
+            const desc = document.getElementById('new-menu-desc').value.trim();
+            const price = Number(document.getElementById('new-menu-price').value);
+            const category = document.getElementById('new-menu-cat').value.trim() || 'Platos Fuertes';
+            
+            const p1 = document.getElementById('new-menu-p1').value.trim();
+            const p2 = document.getElementById('new-menu-p2').value.trim();
+            const p3 = document.getElementById('new-menu-p3').value.trim();
+
+            if(!name || !desc || !price) return window.showToast("Llena Nombre, Desc. y Precio", "error");
+            if(!p1 || !p2 || !p3) return window.showToast("La regla exige exactamente 3 URLs de fotos", "warning");
+
+            try {
+                // Cumple con la validación exacta: data.keys().hasAll(['name', 'description', 'price', 'photos'])
+                await addDoc(collection(db, 'menu'), {
+                    name: name,
+                    description: desc,
+                    price: price,
+                    photos: [p1, p2, p3],
+                    category: category
+                });
                 
-                return `
-                <div class="flex flex-col md:flex-row md:justify-between md:items-center bg-slate-50 p-4 rounded-2xl border border-slate-100 gap-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-black">
-                            ${name.charAt(0)}
-                        </div>
-                        <div>
-                            <span class="font-black text-slate-800 block leading-none">${name}</span>
-                            <span class="text-xs font-bold text-slate-400">Eficiencia: ${rate}%</span>
-                        </div>
-                    </div>
-                    <div class="flex gap-4 text-sm bg-white p-2 rounded-xl border border-slate-100 shrink-0">
-                        <div class="flex items-center gap-1 text-green-600 font-bold bg-green-50 px-2 py-1 rounded-lg">
-                            <i class="ph-bold ph-check-circle"></i> ${waiterStats[name].completed}
-                        </div>
-                        <div class="flex items-center gap-1 text-red-500 font-bold bg-red-50 px-2 py-1 rounded-lg">
-                            <i class="ph-bold ph-x-circle"></i> ${waiterStats[name].rejected}
-                        </div>
-                    </div>
-                </div>
-            `}).join('');
+                window.showToast("Producto agregado a la BD", "success");
+                ['new-menu-name', 'new-menu-desc', 'new-menu-price', 'new-menu-cat', 'new-menu-p1', 'new-menu-p2', 'new-menu-p3'].forEach(id => document.getElementById(id).value = '');
+            } catch (error) {
+                console.error(error);
+                window.showToast("Permiso denegado. ¿Estás como Admin en la BD?", "error");
+            }
+        };
 
-            // Últimas órdenes
-            document.getElementById('admin-all-orders').innerHTML = localState.orders.slice(0, 20).map(o => {
-                const statusColors = {
-                    'Pendiente': 'bg-orange-100 text-orange-700',
-                    'Aceptada': 'bg-blue-100 text-blue-700',
-                    'Completada': 'bg-green-100 text-green-700',
-                    'Rechazada': 'bg-red-100 text-red-700'
-                };
-                
-                return `
-                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-                    <div class="w-full md:w-auto">
-                        <div class="flex items-center justify-between md:justify-start gap-3 w-full">
-                            <span class="font-black text-slate-800">${o.table}</span>
-                            <span class="${statusColors[o.status]} px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">${o.status}</span>
-                        </div>
-                        <p class="text-xs font-medium text-slate-500 mt-1">
-                            <i class="ph ph-clock"></i> ${o.dateStr} ${o.waiter ? `<span class="ml-2"><i class="ph ph-user"></i> ${o.waiter}</span>` : ''}
-                        </p>
-                    </div>
-                    <div class="font-black text-slate-800 text-lg bg-white px-3 py-1 rounded-lg border border-slate-100 shadow-sm md:ml-auto">
-                        ₡${o.total.toLocaleString('es-CR')}
-                    </div>
-                </div>
-            `}).join('');
+        window.deleteMenuItem = async (id) => {
+            try { await deleteDoc(doc(db, 'menu', id)); window.showToast("Producto eliminado", "info"); } 
+            catch (e) { window.showToast("Error al borrar", "error"); }
+        }
 
-            // Reseñas Internas
-            const internalReviews = localState.reviews.filter(r => r.type === 'waiter');
-            document.getElementById('admin-internal-reviews').innerHTML = internalReviews.length > 0 ? internalReviews.map(r => `
-                <div class="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm relative overflow-hidden group hover:border-blue-300 transition-colors">
-                    <div class="absolute right-0 top-0 w-16 h-16 bg-blue-50 rounded-bl-full -z-10"></div>
-                    <div class="flex items-start gap-2 mb-3">
-                        <i class="ph-fill ph-quotes text-blue-300 text-2xl"></i>
-                        <p class="text-sm font-medium text-slate-700 italic flex-1">"${r.text}"</p>
+        function renderAdminMenu() {
+            const container = document.getElementById('admin-menu-list');
+            if(!container) return;
+
+            if(localState.menu.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-sm italic">Menú vacío en la Base de Datos.</p>`;
+                return;
+            }
+
+            container.innerHTML = localState.menu.map(item => `
+                <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex justify-between items-center group">
+                    <div>
+                        <h5 class="font-bold text-slate-200 text-sm">${item.name} <span class="text-xs text-primary font-normal ml-2">₡${item.price}</span></h5>
+                        <p class="text-[10px] text-slate-500 line-clamp-1">${item.photos && item.photos.length >= 3 ? '✓ 3 Fotos validadas' : '⚠ Faltan fotos'}</p>
                     </div>
-                    <div class="border-t border-slate-100 pt-3 flex justify-between items-center text-xs">
-                        <span class="font-bold text-slate-800"><i class="ph-fill ph-user-circle text-blue-500"></i> ${r.author}</span>
-                        <span class="text-slate-500 font-bold bg-slate-100 px-2 py-1 rounded"><i class="ph-fill ph-map-pin"></i> ${r.target}</span>
-                    </div>
+                    <button onclick="window.deleteMenuItem('${item.id}')" class="text-red-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity p-2"><i class="ph-fill ph-trash"></i></button>
                 </div>
-            `).join('') : `
-                <div class="col-span-full text-center py-8">
-                    <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mx-auto mb-2"><i class="ph-duotone ph-clipboard text-2xl"></i></div>
-                    <p class="text-slate-400 font-medium text-sm">No hay notas internas registradas.</p>
-                </div>`;
+            `).join('');
         }
 
         // --- ARRANQUE ---
-        window.onload = () => {
-            initApp();
-        };
+        window.onload = initApp;
 
     </script>
 </body>
